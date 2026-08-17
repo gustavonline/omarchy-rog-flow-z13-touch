@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <ctype.h>
+#include <signal.h>
+#include <unistd.h>
 #include "keyboard.h"
 #include "drw.h"
 #include "os-compatibility.h"
@@ -135,7 +137,7 @@ kbd_init_layers(char *layer_names_list)
             exit(3);
         }
         found = false;
-        for (i = 0; i < NumLayouts - 1; i++) {
+        for (i = 0; i < NumLayouts; i++) {
             if (layouts[i].name && strcmp(layouts[i].name, s) == 0) {
                 fprintf(stderr, "layer #%d = %s\n", numlayers + 1, s);
                 layers[numlayers++] = i;
@@ -168,7 +170,7 @@ kbd_init(struct kbd *kb, struct layout *layouts, char *layer_names_list,
 
     kb->layouts = layouts;
 
-    for (i = 0; i < NumLayouts - 1; i++)
+    for (i = 0; i < NumLayouts; i++)
         ;
     fprintf(stderr, "Found %d layouts\n", i);
 
@@ -205,9 +207,23 @@ void
 kbd_init_layout(struct layout *l, uint32_t width, uint32_t height)
 {
     uint32_t x = 0, y = 0;
+    uint32_t layout_width = width;
+    uint32_t layout_height = height;
+#ifdef KBD_PANEL_MARGIN_RATIO
+    x = (uint32_t)((double)width * KBD_PANEL_MARGIN_RATIO);
+    layout_width -= x * 2;
+#elif defined(KBD_GRID_HORIZONTAL_INSET)
+    x = KBD_GRID_HORIZONTAL_INSET;
+    layout_width -= KBD_GRID_HORIZONTAL_INSET * 2;
+#endif
+#ifdef KBD_GRID_VERTICAL_INSET
+    y = KBD_GRID_VERTICAL_INSET;
+    layout_height -= KBD_GRID_VERTICAL_INSET * 2;
+#endif
+    const uint32_t row_origin_x = x;
     uint8_t rows = kbd_get_rows(l);
 
-    l->keyheight = height / rows;
+    l->keyheight = layout_height / rows;
 
     struct key *k = l->keys;
     double rowlength = kbd_get_row_length(k);
@@ -215,16 +231,16 @@ kbd_init_layout(struct layout *l, uint32_t width, uint32_t height)
     while (k->type != Last) {
         if (k->type == EndRow) {
             y += l->keyheight;
-            x = 0;
+            x = row_origin_x;
             rowwidth = 0.0;
             rowlength = kbd_get_row_length(k + 1);
         } else if (k->width > 0) {
             k->x = x;
             k->y = y;
-            k->w = ((double)width / rowlength) * k->width;
+            k->w = ((double)layout_width / rowlength) * k->width;
             x += k->w;
             rowwidth += k->width;
-            if (x < (rowwidth / rowlength) * (double)width) {
+            if (x < row_origin_x + (rowwidth / rowlength) * (double)layout_width) {
                 k->w++;
                 x++;
             }
@@ -266,7 +282,7 @@ kbd_get_key(struct kbd *kb, uint32_t x, uint32_t y)
 size_t
 kbd_get_layer_index(struct kbd *kb, struct layout *l)
 {
-    for (size_t i = 0; i < NumLayouts - 1; i++) {
+    for (size_t i = 0; i < NumLayouts; i++) {
         if (l == &kb->layouts[i]) {
             return i;
         }
@@ -307,7 +323,7 @@ kbd_unpress_key(struct kbd *kb, uint32_t time)
             if (kb->debug) fprintf(stderr, "release copy key (unlatch_shift=%d, mods=%d)\n", unlatch_shift, kb->mods);
             zwp_virtual_keyboard_v1_key(kb->vkbd, time, 127, // COMP key
                                         WL_KEYBOARD_KEY_STATE_RELEASED);
-        } else {
+        } else if (kb->last_press->type != Macro) {
             if (kb->debug) fprintf(stderr, "release key %d", kb->last_press->code);
             if ((kb->shift_space_is_tab) && (kb->last_press->code == KEY_SPACE) && (unlatch_shift)) {
                 // shift + space is tab
@@ -321,6 +337,13 @@ kbd_unpress_key(struct kbd *kb, uint32_t time)
                                             kb->last_press->code,
                                             WL_KEYBOARD_KEY_STATE_RELEASED);
             }
+        }
+
+        if (kb->last_press->type == Code && kb->last_press->code_mod) {
+            zwp_virtual_keyboard_v1_key_mods(
+                kb->vkbd, time, kb->last_press->code_mod,
+                WL_KEYBOARD_KEY_STATE_RELEASED);
+            zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
         }
 
         if (unlatch_shift) {
@@ -406,6 +429,9 @@ kbd_motion_key(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
 void
 kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 {
+    if (k->type != Mod || k->code != Shift)
+        kb->last_shift_tap = 0;
+
     if ((kb->compose == 1) && (k->type != Compose) && (k->type != Mod)) {
         if ((k->type == NextLayer) || (k->type == BackLayer) ||
             ((k->type == Code) && (k->code == KEY_SPACE))) {
@@ -461,6 +487,36 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
         }
         break;
     case Mod:
+        if (k->code == Shift && (kb->mods & CapsLock)) {
+            kb->mods ^= CapsLock;
+            zwp_virtual_keyboard_v1_key_mods(
+                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_PRESSED);
+            zwp_virtual_keyboard_v1_key_mods(
+                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_RELEASED);
+            zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
+            kb->last_shift_tap = 0;
+            kbd_draw_layout(kb);
+            break;
+        }
+        if (k->code == Shift && time && kb->last_shift_tap &&
+            time - kb->last_shift_tap <= 350) {
+            if (kb->mods & Shift) {
+                kb->mods ^= Shift;
+                zwp_virtual_keyboard_v1_key_mods(
+                    kb->vkbd, time, Shift, WL_KEYBOARD_KEY_STATE_RELEASED);
+            }
+            kb->mods ^= CapsLock;
+            zwp_virtual_keyboard_v1_key_mods(
+                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_PRESSED);
+            zwp_virtual_keyboard_v1_key_mods(
+                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_RELEASED);
+            zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
+            kb->last_shift_tap = 0;
+            kbd_draw_layout(kb);
+            break;
+        }
+        if (k->code == Shift)
+            kb->last_shift_tap = time;
         kb->mods ^= k->code;
         if (kb->mods & k->code) {
             if (kb->debug)
@@ -545,9 +601,43 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
         if (kb->print || kb->print_intersect)
             kbd_print_key_stdout(kb, k);
         break;
+    case Macro:
+        kb->last_swipe = kb->last_press = k;
+        kbd_draw_key(kb, k, Press);
+        zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
+        for (uint8_t i = 0; i < k->macro_len; i++) {
+            zwp_virtual_keyboard_v1_key(kb->vkbd, time, k->macro_codes[i],
+                                        WL_KEYBOARD_KEY_STATE_PRESSED);
+            zwp_virtual_keyboard_v1_key(kb->vkbd, time, k->macro_codes[i],
+                                        WL_KEYBOARD_KEY_STATE_RELEASED);
+        }
+        break;
+    case Hide:
+        /* Let the main loop destroy the layer surface after this callback. */
+        kill(getpid(), SIGUSR1);
+        break;
     default:
         break;
     }
+}
+
+void
+kbd_emit_flick(struct kbd *kb, struct key *k, uint32_t time)
+{
+    if (!k->flick_codepoint && !k->flick_code)
+        return;
+
+    struct key flick = {
+        .label = k->flick_label,
+        .shift_label = k->flick_label,
+        .flick_label = "",
+        .width = k->width,
+        .type = k->flick_codepoint ? Copy : Code,
+        .code = k->flick_codepoint ? k->flick_codepoint : k->flick_code,
+        .scheme = k->scheme,
+    };
+    kbd_press_key(kb, &flick, time);
+    kbd_release_key(kb, time);
 }
 
 void
@@ -664,6 +754,19 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
                   KBD_KEY_BORDER, label, scheme->font_description);
     }
 
+    if (k->flick_label && k->flick_label[0] && type != Swipe) {
+        PangoFontDescription *flick_font =
+            pango_font_description_copy(scheme->font_description);
+        int font_size = pango_font_description_get_size(flick_font);
+        pango_font_description_set_size(flick_font, (font_size * 3) / 5);
+        drw_draw_text(kb->surf,
+                      type == Press ? scheme->text_press : scheme->text,
+                      k->x + (k->w * 55) / 100, k->y,
+                      (k->w * 40) / 100, (k->h * 42) / 100,
+                      1, k->flick_label, flick_font);
+        pango_font_description_free(flick_font);
+    }
+
 
     if (kb->show_popup && (type == Press || type == Unpress)) {
         kbd_clear_last_popup(kb);
@@ -691,10 +794,22 @@ kbd_draw_layout(struct kbd *kb)
 {
     struct drwsurf *d = kb->surf;
     struct key *next_key = kb->layout->keys;
+    /* Match Omarchy's outer window gap on this logical panel. */
+#ifdef KBD_PANEL_MARGIN_RATIO
+    uint32_t panel_margin = (uint32_t)((double)kb->w * KBD_PANEL_MARGIN_RATIO);
+#elif defined(KBD_PANEL_MARGIN)
+    uint32_t panel_margin = KBD_PANEL_MARGIN;
+#else
+    uint32_t panel_margin = kb->w / 20;
+#endif
     if (kb->debug)
         fprintf(stderr, "Draw layout\n");
 
-    drw_fill_rectangle(d, kb->schemes[0].bg, 0, 0, kb->w, kb->h, 0);
+    /* Keep the exclusive full-width surface so tiled windows move above the
+     * keyboard, but show the wallpaper through both side gutters. */
+    drw_do_clear(d, 0, 0, kb->w, kb->h);
+    drw_fill_rectangle(d, kb->schemes[0].bg, panel_margin, 0,
+                       kb->w - (panel_margin * 2), kb->h, 0);
 
     while (next_key->type != Last) {
         if ((next_key->type == Pad) || (next_key->type == EndRow)) {

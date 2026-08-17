@@ -1,0 +1,14 @@
+[Unit]
+Description=ROG Flow Z13 touch keyboard
+After=graphical-session.target
+PartOf=graphical-session.target
+Conflicts=omarchy-fcitx5.service
+ConditionEnvironment=WAYLAND_DISPLAY
+ConditionPathExists=!/dev/input/by-id/usb-ASUSTeK_Computer_Inc._GZ302EA-Keyboard-if02-event-kbd
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/z13-osk
+Restart=on-failure
+RestartSec=1
+

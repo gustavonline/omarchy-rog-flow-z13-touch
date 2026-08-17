@@ -1,0 +1,11 @@
+[Unit]
+Description=Watch ROG Flow Z13 keyboard-cover changes
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Path]
+PathChanged=/dev/input/by-id
+Unit=z13-keyboard-state.service
+
+[Install]
+WantedBy=graphical-session.target

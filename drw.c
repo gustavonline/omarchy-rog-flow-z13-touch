@@ -276,7 +276,8 @@ setup_buffer(struct drwsurf *drwsurf, struct drwbuf *drwbuf)
         cairo_destroy(drwbuf->cairo);
     drwbuf->cairo = cairo_create(drwbuf->cairo_surf);
     cairo_scale(drwbuf->cairo, drwsurf->scale, drwsurf->scale);
-    cairo_set_antialias(drwbuf->cairo, CAIRO_ANTIALIAS_NONE);
+    // Fractional HiDPI displays need antialiased vector edges and glyphs.
+    cairo_set_antialias(drwbuf->cairo, CAIRO_ANTIALIAS_BEST);
     drwbuf->layout = pango_cairo_create_layout(drwbuf->cairo);
     pango_layout_set_auto_dir(drwbuf->layout, false);
     cairo_save(drwbuf->cairo);

@@ -8,3 +8,4 @@ include/config.h
 *.1
 build-*/*
 wvkbd-*
+/layout.z13.h

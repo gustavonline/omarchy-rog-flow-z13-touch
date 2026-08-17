@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly binary="$HOME/.local/libexec/z13-osk/wvkbd-z13"
+readonly theme_file="$HOME/.config/omarchy/z13-keyboard/theme.env"
+readonly mode_file="$HOME/.local/state/omarchy/current/appearance-mode"
+
+if [[ ! -x "$binary" ]]; then
+  printf 'z13-osk: missing executable: %s\n' "$binary" >&2
+  exit 1
+fi
+if [[ ! -r "$theme_file" ]]; then
+  printf 'z13-osk: missing theme: %s\n' "$theme_file" >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1090
+source "$theme_file"
+
+mode=$(<"$mode_file" 2>/dev/null || true)
+if [[ "$mode" != "light" && "$mode" != "dark" ]]; then
+  current_theme=$(omarchy theme current 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+  [[ "$current_theme" == *latte* ]] && mode=light || mode=dark
+fi
+
+if [[ "$mode" == "light" ]]; then
+  bg=$LIGHT_BG key=$LIGHT_KEY special=$LIGHT_SPECIAL press=$LIGHT_PRESS
+  accent=$LIGHT_ACCENT text=$LIGHT_TEXT
+else
+  bg=$DARK_BG key=$DARK_KEY special=$DARK_SPECIAL press=$DARK_PRESS
+  accent=$DARK_ACCENT text=$DARK_TEXT
+fi
+
+exec "$binary" \
+  --auto --hidden --no-popup \
+  --fn 'Inter 19' --alpha 255 -R 10 \
+  --bg "$bg" --fg "$key" --fg-sp "$special" \
+  --press "$press" --press-sp "$press" \
+  --swipe "$accent" --swipe-sp "$accent" \
+  --text "$text" --text-sp "$text" \
+  --text-press "$text" --text-press-sp "$text" \
+  --text-swipe "$bg" --text-swipe-sp "$bg"

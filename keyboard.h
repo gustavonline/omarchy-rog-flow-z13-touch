@@ -24,6 +24,8 @@ enum key_type {
 	NextLayer, // Layout switch to the next layout in the layers sequence
 	Compose,   // Compose modifier key, switches to a specific associated layout
 	           // upon next keypress
+	Macro,     // A short, fixed sequence of keycodes
+	Hide,      // Hide the keyboard surface
 	EndRow,    // Incidates the end of a key row
 	Last,      // Indicated the end of a layout
 };
@@ -64,6 +66,7 @@ struct clr_scheme {
 struct key {
 	const char *label;       // primary label
 	const char *shift_label; // secondary label
+	const char *flick_label; // small alternate label emitted by a downward flick
 	const double width;      // relative width (1.0)
 	const enum key_type type;
 
@@ -75,6 +78,10 @@ struct key {
 	struct layout *layout;   // pointer back to the parent layout that holds this
 	                         // key
 	const uint32_t code_mod; /* modifier to force when this key is pressed */
+	const uint32_t flick_code;
+	const uint32_t flick_codepoint;
+	const uint32_t *macro_codes;
+	const uint8_t macro_len;
 	uint8_t scheme;          // index of the scheme to use
 	bool reset_mod;          /* reset modifiers when clicked */
 
@@ -126,6 +133,7 @@ struct kbd {
 	struct zwp_virtual_keyboard_v1 *vkbd;
 
 	uint32_t last_popup_x, last_popup_y, last_popup_w, last_popup_h;
+	uint32_t last_shift_tap;
 };
 
 void draw_inset(struct drwsurf *ds, uint32_t x, uint32_t y, uint32_t width,
@@ -142,6 +150,7 @@ void kbd_unpress_key(struct kbd *kb, uint32_t time);
 void kbd_release_key(struct kbd *kb, uint32_t time);
 void kbd_motion_key(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y);
 void kbd_press_key(struct kbd *kb, struct key *k, uint32_t time);
+void kbd_emit_flick(struct kbd *kb, struct key *k, uint32_t time);
 void kbd_print_key_stdout(struct kbd *kb, struct key *k);
 void kbd_print_first_utf8_char_stdout(const char *str);
 void kbd_clear_last_popup(struct kbd *kb);

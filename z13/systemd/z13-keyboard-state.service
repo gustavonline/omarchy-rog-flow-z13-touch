@@ -1,0 +1,12 @@
+[Unit]
+Description=Apply ROG Flow Z13 keyboard-cover state
+After=graphical-session.target
+PartOf=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/z13-keyboard-state
+
+[Install]
+WantedBy=graphical-session.target

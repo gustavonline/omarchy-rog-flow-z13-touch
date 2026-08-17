@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# Omarchy theme-set hook: do nothing while the physical cover is attached.
+systemctl --user --no-block try-restart z13-osk.service

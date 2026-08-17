@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "keymap": "latin",
+  "geometry": {
+    "height": 340,
+    "landscape_height": 340,
+    "key_border": 6,
+    "panel_margin_ratio": 0.04
+  },
+  "layers": [
+    {
+      "id": "Letters",
+      "name": "letters",
+      "alphabetic": true,
+      "rows": [
+        [
+          {"type":"pad","width":0.5},
+          {"label":"q","shift":"Q","flick":"1","code":"KEY_Q","flick_code":"KEY_1"},
+          {"label":"w","shift":"W","flick":"2","code":"KEY_W","flick_code":"KEY_2"},
+          {"label":"e","shift":"E","flick":"3","code":"KEY_E","flick_code":"KEY_3"},
+          {"label":"r","shift":"R","flick":"4","code":"KEY_R","flick_code":"KEY_4"},
+          {"label":"t","shift":"T","flick":"5","code":"KEY_T","flick_code":"KEY_5"},
+          {"label":"y","shift":"Y","flick":"6","code":"KEY_Y","flick_code":"KEY_6"},
+          {"label":"u","shift":"U","flick":"7","code":"KEY_U","flick_code":"KEY_7"},
+          {"label":"i","shift":"I","flick":"8","code":"KEY_I","flick_code":"KEY_8"},
+          {"label":"o","shift":"O","flick":"9","code":"KEY_O","flick_code":"KEY_9"},
+          {"label":"p","shift":"P","flick":"0","code":"KEY_P","flick_code":"KEY_0"},
+          {"label":"å","shift":"Å","code":"KEY_LEFTBRACE"},
+          {"type":"pad","width":0.5}
+        ],
+        [
+          {"type":"pad","width":0.5},
+          {"label":"a","shift":"A","flick":"@","code":"KEY_A","flick_text":"@"},
+          {"label":"s","shift":"S","flick":"#","code":"KEY_S","flick_text":"#"},
+          {"label":"d","shift":"D","flick":"$","code":"KEY_D","flick_text":"$"},
+          {"label":"f","shift":"F","flick":"&","code":"KEY_F","flick_text":"&"},
+          {"label":"g","shift":"G","flick":"*","code":"KEY_G","flick_text":"*"},
+          {"label":"h","shift":"H","flick":"(","code":"KEY_H","flick_text":"("},
+          {"label":"j","shift":"J","flick":")","code":"KEY_J","flick_text":")"},
+          {"label":"k","shift":"K","flick":"'","code":"KEY_K","flick_text":"'"},
+          {"label":"l","shift":"L","flick":"\"","code":"KEY_L","flick_text":"\""},
+          {"label":"æ","shift":"Æ","flick":"€","code":"KEY_SEMICOLON","flick_text":"€"},
+          {"label":"ø","shift":"Ø","flick":"£","code":"KEY_APOSTROPHE","flick_text":"£"},
+          {"type":"pad","width":0.5}
+        ],
+        [
+          {"type":"pad","width":1.0},
+          {"label":"⇧","shift":"⇫","type":"modifier","modifier":"Shift","style":"special","width":1.5},
+          {"label":"z","shift":"Z","flick":"%","code":"KEY_Z","flick_text":"%"},
+          {"label":"x","shift":"X","flick":"-","code":"KEY_X","flick_text":"-"},
+          {"label":"c","shift":"C","flick":"+","code":"KEY_C","flick_text":"+"},
+          {"label":"v","shift":"V","flick":"=","code":"KEY_V","flick_text":"="},
+          {"label":"b","shift":"B","flick":"/","code":"KEY_B","flick_text":"/"},
+          {"label":"n","shift":"N","flick":";","code":"KEY_N","flick_text":";"},
+          {"label":"m","shift":"M","flick":":","code":"KEY_M","flick_text":":"},
+          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":1.5},
+          {"type":"pad","width":1.0}
+        ],
+        [
+          {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
+          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.2},
+          {"label":"SUPER","type":"modifier","modifier":"Super","style":"special","width":1.4},
+          {"label":"Dansk","type":"code","code":"KEY_SPACE","width":4.2},
+          {"label":".","type":"copy","text":"."},
+          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":1.5},
+          {"label":"⌨↓","type":"hide","style":"special","width":1.2}
+        ]
+      ]
+    },
+    {
+      "id": "Numbers",
+      "name": "numbers",
+      "alphabetic": false,
+      "rows": [
+        [
+          {"type":"pad","width":1.0},
+          {"label":"1","code":"KEY_1"},{"label":"2","code":"KEY_2"},{"label":"3","code":"KEY_3"},{"label":"4","code":"KEY_4"},{"label":"5","code":"KEY_5"},
+          {"label":"6","code":"KEY_6"},{"label":"7","code":"KEY_7"},{"label":"8","code":"KEY_8"},{"label":"9","code":"KEY_9"},{"label":"0","code":"KEY_0"},
+          {"type":"pad","width":1.0}
+        ],
+        [
+          {"type":"pad","width":1.0},
+          {"label":"-","type":"copy","text":"-"},{"label":"/","type":"copy","text":"/"},{"label":":","type":"copy","text":":"},{"label":";","type":"copy","text":";"},
+          {"label":"(","type":"copy","text":"("},{"label":")","type":"copy","text":")"},{"label":"kr","type":"macro","codes":["KEY_K","KEY_R"]},
+          {"label":"&","type":"copy","text":"&"},{"label":"@","type":"copy","text":"@"},{"label":"\"","type":"copy","text":"\""},
+          {"type":"pad","width":1.0}
+        ],
+        [
+          {"type":"pad","width":2.0},
+          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5},
+          {"label":".","type":"copy","text":"."},{"label":",","type":"copy","text":","},{"label":"?","type":"copy","text":"?"},{"label":"!","type":"copy","text":"!"},{"label":"'","type":"copy","text":"'"},
+          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":1.5},
+          {"type":"pad","width":2.0}
+        ],
+        [
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
+          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.2},
+          {"label":"SUPER","type":"modifier","modifier":"Super","style":"special","width":1.4},
+          {"label":"Dansk","type":"code","code":"KEY_SPACE","width":4.2},
+          {"label":".","type":"copy","text":"."},
+          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":1.5},
+          {"label":"⌨↓","type":"hide","style":"special","width":1.2}
+        ]
+      ]
+    },
+    {
+      "id": "Symbols",
+      "name": "symbols",
+      "alphabetic": false,
+      "rows": [
+        [
+          {"type":"pad","width":1.0},
+          {"label":"[","type":"copy","text":"["},{"label":"]","type":"copy","text":"]"},{"label":"{","type":"copy","text":"{"},{"label":"}","type":"copy","text":"}"},
+          {"label":"#","type":"copy","text":"#"},{"label":"%","type":"copy","text":"%"},{"label":"^","type":"copy","text":"^"},{"label":"*","type":"copy","text":"*"},
+          {"label":"+","type":"copy","text":"+"},{"label":"=","type":"copy","text":"="},
+          {"type":"pad","width":1.0}
+        ],
+        [
+          {"type":"pad","width":1.0},
+          {"label":"_","type":"copy","text":"_"},{"label":"\\","type":"copy","text":"\\"},{"label":"|","type":"copy","text":"|"},{"label":"~","type":"copy","text":"~"},
+          {"label":"<","type":"copy","text":"<"},{"label":">","type":"copy","text":">"},{"label":"€","type":"copy","text":"€"},{"label":"£","type":"copy","text":"£"},
+          {"label":"¥","type":"copy","text":"¥"},{"label":"•","type":"copy","text":"•"},
+          {"type":"pad","width":1.0}
+        ],
+        [
+          {"type":"pad","width":0.75},
+          {"label":"`","type":"copy","text":"`"},{"label":"·","type":"copy","text":"·"},{"label":"√","type":"copy","text":"√"},{"label":"π","type":"copy","text":"π"},
+          {"label":"÷","type":"copy","text":"÷"},{"label":"×","type":"copy","text":"×"},{"label":"§","type":"copy","text":"§"},{"label":"©","type":"copy","text":"©"},
+          {"label":"®","type":"copy","text":"®"},{"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":1.5},
+          {"type":"pad","width":0.75}
+        ],
+        [
+          {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
+          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.2},
+          {"label":"SUPER","type":"modifier","modifier":"Super","style":"special","width":1.4},
+          {"label":"Dansk","type":"code","code":"KEY_SPACE","width":3.7},
+          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":1.5},
+          {"label":"⌨↓","type":"hide","style":"special","width":1.2}
+        ]
+      ]
+    },
+    {
+      "id": "Functions",
+      "name": "functions",
+      "alphabetic": false,
+      "rows": [
+        [
+          {"label":"ESC","code":"KEY_ESC","style":"special","width":1.2},
+          {"label":"F1","code":"KEY_F1","width":0.8},{"label":"F2","code":"KEY_F2","width":0.8},{"label":"F3","code":"KEY_F3","width":0.8},{"label":"F4","code":"KEY_F4","width":0.8},
+          {"label":"F5","code":"KEY_F5","width":0.8},{"label":"F6","code":"KEY_F6","width":0.8},{"label":"F7","code":"KEY_F7","width":0.8},{"label":"F8","code":"KEY_F8","width":0.8},
+          {"label":"F9","code":"KEY_F9","width":0.8},{"label":"F10","code":"KEY_F10","width":0.8},{"label":"F11","code":"KEY_F11","width":0.8},{"label":"F12","code":"KEY_F12","width":0.8},
+          {"label":"DEL","code":"KEY_DELETE","style":"special","width":1.2}
+        ],
+        [
+          {"label":"TAB","code":"KEY_TAB","style":"special","width":1.2},{"label":"INS","code":"KEY_INSERT","style":"special","width":1.2},
+          {"label":"HOME","code":"KEY_HOME","style":"special","width":1.2},{"label":"END","code":"KEY_END","style":"special","width":1.2},
+          {"label":"PGUP","code":"KEY_PAGEUP","style":"special","width":1.2},{"label":"PGDN","code":"KEY_PAGEDOWN","style":"special","width":1.2},
+          {"label":"⌫","code":"KEY_BACKSPACE","style":"special","width":1.5},{"label":"ENTER","code":"KEY_ENTER","style":"special","width":1.5},
+          {"type":"pad","width":1.8}
+        ],
+        [
+          {"label":"CTRL","type":"modifier","modifier":"Ctrl","style":"special","width":1.3},
+          {"label":"SUPER","type":"modifier","modifier":"Super","style":"special","width":1.3},
+          {"label":"ALT","type":"modifier","modifier":"Alt","style":"special","width":1.3},
+          {"label":"ALTGR","type":"modifier","modifier":"AltGr","style":"special","width":1.3},
+          {"label":"SHIFT","type":"modifier","modifier":"Shift","style":"special","width":1.3},
+          {"type":"pad","width":2.2},{"label":"↑","code":"KEY_UP","style":"special","width":1.1},{"type":"pad","width":2.2}
+        ],
+        [
+          {"label":"UNDO","type":"shortcut","code":"KEY_Z","modifier":"Ctrl","style":"special","width":1.2},
+          {"label":"CUT","type":"shortcut","code":"KEY_X","modifier":"Ctrl","style":"special","width":1.2},
+          {"label":"COPY","type":"shortcut","code":"KEY_C","modifier":"Ctrl","style":"special","width":1.2},
+          {"label":"PASTE","type":"shortcut","code":"KEY_V","modifier":"Ctrl","style":"special","width":1.2},
+          {"type":"pad","width":0.8},{"label":"SHOT","code":"KEY_SYSRQ","style":"special","width":1.2},{"type":"pad","width":0.6},
+          {"label":"←","code":"KEY_LEFT","style":"special","width":1.1},{"label":"↓","code":"KEY_DOWN","style":"special","width":1.1},{"label":"→","code":"KEY_RIGHT","style":"special","width":1.1},{"type":"pad","width":1.3}
+        ],
+        [
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
+          {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
+          {"label":"SUPER","type":"modifier","modifier":"Super","style":"special","width":1.4},
+          {"label":"Dansk","type":"code","code":"KEY_SPACE","width":6.4},
+          {"label":"⌨↓","type":"hide","style":"special","width":1.2}
+        ]
+      ]
+    }
+  ]
+}

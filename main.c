@@ -11,6 +11,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/signalfd.h>
+#include <sys/timerfd.h>
 #include <poll.h>
 #include <unistd.h>
 #include <wayland-client-protocol.h>
@@ -74,6 +75,60 @@ static uint32_t height, normal_height, landscape_height;
 static int rounding = DEFAULT_ROUNDING;
 static bool hidden = false;
 static bool im_auto = false;
+static bool input_method_active = false;
+static double forced_scale = 0;
+static struct key *touch_space_key = NULL;
+static uint32_t touch_space_started = 0;
+static int touch_space_x = 0, touch_space_y = 0;
+static bool touch_space_trackpad = false;
+static struct key *touch_flick_key = NULL;
+static int32_t touch_flick_id = -1;
+static int touch_flick_x = 0, touch_flick_y = 0;
+static bool touch_flicked = false;
+static int repeat_fd = -1;
+static struct key *repeat_key = NULL;
+static int hide_delay_fd = -1;
+
+static void cancel_delayed_hide(void)
+{
+    if (hide_delay_fd >= 0) {
+        struct itimerspec timer = {0};
+        timerfd_settime(hide_delay_fd, 0, &timer, NULL);
+    }
+}
+
+static void schedule_delayed_hide(void)
+{
+    if (hide_delay_fd < 0)
+        return;
+    struct itimerspec timer = {
+        .it_value = { .tv_sec = 0, .tv_nsec = 500000000 },
+    };
+    timerfd_settime(hide_delay_fd, 0, &timer, NULL);
+}
+
+static void stop_key_repeat(void)
+{
+    if (repeat_fd >= 0) {
+        struct itimerspec timer = {0};
+        timerfd_settime(repeat_fd, 0, &timer, NULL);
+    }
+    repeat_key = NULL;
+}
+
+static void start_key_repeat(struct key *key)
+{
+    if (!key || key->type != Code ||
+        (key->code != KEY_BACKSPACE && key->code != KEY_DELETE))
+        return;
+
+    struct itimerspec timer = {
+        .it_value = { .tv_sec = 0, .tv_nsec = 420000000 },
+        .it_interval = { .tv_sec = 0, .tv_nsec = 55000000 },
+    };
+    repeat_key = key;
+    timerfd_settime(repeat_fd, 0, &timer, NULL);
+}
 
 /* event handler prototypes */
 static void wl_pointer_enter(void *data, struct wl_pointer *wl_pointer,
@@ -258,11 +313,35 @@ wl_touch_down(void *data, struct wl_touch *wl_touch, uint32_t serial,
     touch_x = wl_fixed_to_int(x);
     touch_y = wl_fixed_to_int(y);
 
+    stop_key_repeat();
     kbd_unpress_key(&keyboard, time);
 
     next_key = kbd_get_key(&keyboard, touch_x, touch_y);
     if (next_key) {
-        kbd_press_key(&keyboard, next_key, time);
+        if (next_key->type == Code && next_key->code == KEY_SPACE) {
+            touch_space_key = next_key;
+            touch_space_started = time;
+            touch_space_x = touch_x;
+            touch_space_y = touch_y;
+            touch_space_trackpad = false;
+            kbd_draw_key(&keyboard, next_key, Press);
+        } else if (next_key->flick_label && next_key->flick_label[0]) {
+            touch_flick_key = next_key;
+            touch_flick_id = id;
+            touch_flick_x = touch_x;
+            touch_flick_y = touch_y;
+            touch_flicked = false;
+            kbd_draw_key(&keyboard, next_key, Press);
+        } else {
+            kbd_press_key(&keyboard, next_key, time);
+            start_key_repeat(next_key);
+            /* Keys that can move focus or replace the current surface must
+             * release before the compositor deactivates the input method. */
+            if (next_key->type == Code &&
+                (next_key->code == KEY_TAB || next_key->code == KEY_ENTER ||
+                 next_key->code == KEY_SYSRQ || next_key->code == KEY_ESC))
+                kbd_release_key(&keyboard, time);
+        }
     } else if (keyboard.compose) {
         keyboard.compose = 0;
         kbd_switch_layout(&keyboard, keyboard.prevlayout,
@@ -275,6 +354,34 @@ wl_touch_up(void *data, struct wl_touch *wl_touch, uint32_t serial,
             uint32_t time, int32_t id)
 {
     if(!layer_surface_configured || !popup_xdg_surface_configured) {
+        return;
+    }
+
+    stop_key_repeat();
+    if (touch_flick_key && touch_flick_id == id) {
+        struct key *key = touch_flick_key;
+        bool flicked = touch_flicked;
+        touch_flick_key = NULL;
+        touch_flick_id = -1;
+        touch_flicked = false;
+        kbd_draw_key(&keyboard, key, Unpress);
+        if (flicked)
+            kbd_emit_flick(&keyboard, key, time);
+        else {
+            kbd_press_key(&keyboard, key, time);
+            kbd_release_key(&keyboard, time);
+        }
+        return;
+    }
+    if (touch_space_key) {
+        if (!touch_space_trackpad) {
+            kbd_press_key(&keyboard, touch_space_key, time);
+            kbd_release_key(&keyboard, time);
+        } else {
+            kbd_draw_key(&keyboard, touch_space_key, Unpress);
+        }
+        touch_space_key = NULL;
+        touch_space_trackpad = false;
         return;
     }
 
@@ -294,6 +401,37 @@ wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
     touch_x = wl_fixed_to_int(x);
     touch_y = wl_fixed_to_int(y);
 
+    if (touch_flick_key && touch_flick_id == id) {
+        int dx = (int)touch_x - touch_flick_x;
+        int dy = (int)touch_y - touch_flick_y;
+        if (!touch_flicked && dy >= 18 && abs(dy) > abs(dx)) {
+            touch_flicked = true;
+            kbd_draw_key(&keyboard, touch_flick_key, Swipe);
+        }
+        return;
+    }
+
+    if (touch_space_key) {
+        int dx = (int)touch_x - touch_space_x;
+        int dy = (int)touch_y - touch_space_y;
+        if (time - touch_space_started >= 280 &&
+            (abs(dx) >= 18 || abs(dy) >= 18)) {
+            uint32_t code;
+            if (abs(dx) >= abs(dy))
+                code = dx < 0 ? KEY_LEFT : KEY_RIGHT;
+            else
+                code = dy < 0 ? KEY_UP : KEY_DOWN;
+            zwp_virtual_keyboard_v1_key(keyboard.vkbd, time, code,
+                                        WL_KEYBOARD_KEY_STATE_PRESSED);
+            zwp_virtual_keyboard_v1_key(keyboard.vkbd, time, code,
+                                        WL_KEYBOARD_KEY_STATE_RELEASED);
+            touch_space_x = touch_x;
+            touch_space_y = touch_y;
+            touch_space_trackpad = true;
+        }
+        return;
+    }
+
     kbd_motion_key(&keyboard, time, touch_x, touch_y);
 }
 
@@ -305,6 +443,15 @@ wl_touch_frame(void *data, struct wl_touch *wl_touch)
 void
 wl_touch_cancel(void *data, struct wl_touch *wl_touch)
 {
+    stop_key_repeat();
+    if (touch_flick_key)
+        kbd_draw_key(&keyboard, touch_flick_key, Unpress);
+    touch_flick_key = NULL;
+    touch_flick_id = -1;
+    touch_flicked = false;
+    touch_space_key = NULL;
+    touch_space_trackpad = false;
+    kbd_release_key(&keyboard, 0);
 }
 
 void
@@ -516,19 +663,27 @@ static const struct wp_fractional_scale_v1_listener
 void
 im_activate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
+    input_method_active = true;
+    cancel_delayed_hide();
     show();
 }
 
 void
 im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
-    hide();
+    input_method_active = false;
+    schedule_delayed_hide();
 }
 
 void
 im_surrounding_text(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
                     const char *text, uint32_t cursor, uint32_t anchor)
 {
+    /* A second tap in an already-focused field does not emit activate again,
+     * but clients do refresh surrounding text.  Use that refresh to restore a
+     * manually hidden keyboard without reacting to every IM commit. */
+    if (input_method_active && hidden)
+        show();
 }
 
 void im_text_change_cause(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
@@ -565,6 +720,7 @@ redimension_keyboard()
         height = normal_height;
     }
 
+    // Keep the Z13 keyboard centered and comfortably reachable in tablet mode.
     keyboard.w = available_width;
     keyboard.h = height;
     keyboard.layout = &keyboard.layouts[layer];
@@ -599,7 +755,9 @@ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface,
     layer_surface_configured = true;
 
     double scale = keyboard.preferred_scale;
-    if (keyboard.preferred_fractional_scale) {
+    if (forced_scale > 0) {
+        scale = forced_scale;
+    } else if (keyboard.preferred_fractional_scale) {
         scale = keyboard.preferred_fractional_scale;
     }
 
@@ -674,6 +832,7 @@ usage(char *argv0)
         stderr,
         "  --alpha [int]          - Set alpha value for all colors [0-255]\n");
     fprintf(stderr, "  --auto                 - Automatically toggle visibility based on focus\n");
+    fprintf(stderr, "  --scale [number]       - Force the drawing scale (for fractional HiDPI)\n");
     fprintf(stderr, "  --bg [rrggbb|aa]       - Set color of background\n");
     fprintf(stderr, "  --fg [rrggbb|aa]       - Set color of keys\n");
     fprintf(stderr, "  --fg-sp [rrggbb|aa]    - Set color of special keys\n");
@@ -709,7 +868,7 @@ void
 list_layers()
 {
     int i;
-    for (i = 0; i < NumLayouts - 1; i++) {
+    for (i = 0; i < NumLayouts; i++) {
         if (layouts[i].name) {
             puts(layouts[i].name);
         }
@@ -722,6 +881,15 @@ hide()
     if (!layer_surface) {
         return;
     }
+
+    /* Never leave a virtual key latched when focus loss hides the surface. */
+    kbd_release_key(&keyboard, 0);
+    stop_key_repeat();
+    touch_space_key = NULL;
+    touch_space_trackpad = false;
+    touch_flick_key = NULL;
+    touch_flick_id = -1;
+    touch_flicked = false;
 
     if (wfs_draw_surf) {
         wp_fractional_scale_v1_destroy(wfs_draw_surf);
@@ -787,7 +955,7 @@ show()
     layer_surface = zwlr_layer_shell_v1_get_layer_surface(
         layer_shell, draw_surf.surf, current_output_data, layer, namespace);
 
-    zwlr_layer_surface_v1_set_size(layer_surface, 0, height);
+    zwlr_layer_surface_v1_set_size(layer_surface, keyboard.w, height);
     zwlr_layer_surface_v1_set_anchor(layer_surface, anchor);
     if (keyboard.exclusive) {
         zwlr_layer_surface_v1_set_exclusive_zone(layer_surface, height);
@@ -1060,6 +1228,16 @@ main(int argc, char **argv)
         } else if ((!strcmp(argv[i], "-auto")) ||
                    (!strcmp(argv[i], "--auto"))) {
             im_auto = true;
+        } else if (!strcmp(argv[i], "--scale")) {
+            if (i >= argc - 1) {
+                usage(argv[0]);
+                exit(1);
+            }
+            forced_scale = strtod(argv[++i], NULL);
+            if (forced_scale <= 0) {
+                fprintf(stderr, "Invalid scale: %s\n", argv[i]);
+                exit(1);
+            }
         } else {
             fprintf(stderr, "Invalid argument: %s\n", argv[i]);
             usage(argv[0]);
@@ -1154,11 +1332,15 @@ main(int argc, char **argv)
     if (!hidden)
         show();
 
-    struct pollfd fds[2];
+    struct pollfd fds[4];
     int WAYLAND_FD = 0;
     int SIGNAL_FD = 1;
+    int REPEAT_FD = 2;
+    int HIDE_DELAY_FD = 3;
     fds[WAYLAND_FD].events = POLLIN;
     fds[SIGNAL_FD].events = POLLIN;
+    fds[REPEAT_FD].events = POLLIN;
+    fds[HIDE_DELAY_FD].events = POLLIN;
 
     fds[WAYLAND_FD].fd = wl_display_get_fd(display);
     if (fds[WAYLAND_FD].fd == -1) {
@@ -1180,9 +1362,21 @@ main(int argc, char **argv)
         die("Failed to get signalfd: %d\n", errno);
     }
 
+    repeat_fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+    if (repeat_fd == -1) {
+        die("Failed to create repeat timer: %d\n", errno);
+    }
+    fds[REPEAT_FD].fd = repeat_fd;
+
+    hide_delay_fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC | TFD_NONBLOCK);
+    if (hide_delay_fd == -1) {
+        die("Failed to create hide delay timer: %d\n", errno);
+    }
+    fds[HIDE_DELAY_FD].fd = hide_delay_fd;
+
     while (run_display) {
         wl_display_flush(display);
-        poll(fds, 2, -1);
+        poll(fds, 4, -1);
 
         if (fds[WAYLAND_FD].revents & POLLIN)
             wl_display_dispatch(display);
@@ -1206,6 +1400,25 @@ main(int argc, char **argv)
                 toggle_visibility();
             else if (si.ssi_signo == SIGPIPE)
                 pipewarn();
+        }
+
+        if (fds[REPEAT_FD].revents & POLLIN) {
+            uint64_t expirations = 0;
+            if (read(repeat_fd, &expirations, sizeof(expirations)) == sizeof(expirations) &&
+                repeat_key && keyboard.last_press == repeat_key) {
+                for (uint64_t n = 0; n < expirations; n++) {
+                    zwp_virtual_keyboard_v1_key(keyboard.vkbd, 0, repeat_key->code,
+                                                WL_KEYBOARD_KEY_STATE_RELEASED);
+                    zwp_virtual_keyboard_v1_key(keyboard.vkbd, 0, repeat_key->code,
+                                                WL_KEYBOARD_KEY_STATE_PRESSED);
+                }
+            }
+        }
+
+        if (fds[HIDE_DELAY_FD].revents & POLLIN) {
+            uint64_t expirations = 0;
+            if (read(hide_delay_fd, &expirations, sizeof(expirations)) == sizeof(expirations))
+                hide();
         }
     }
 
