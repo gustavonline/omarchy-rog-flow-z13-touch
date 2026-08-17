@@ -12,6 +12,9 @@ BarWidget {
   moduleName: "io.github.gustavonline.z13-touch-tray"
 
   property bool touchExpanded: false
+  property bool coverAttached: true
+  readonly property string coverStatePath: Quickshell.env("XDG_RUNTIME_DIR") + "/z13-cover-state"
+  readonly property bool tabletMode: !coverAttached
   readonly property var stockTray: stockTrayLoader.item
 
   visible: stockTray
@@ -25,8 +28,25 @@ BarWidget {
   }
 
   function toggleTouchExpanded() {
+    if (!tabletMode) return
     touchExpanded = !touchExpanded
     applyTouchState()
+  }
+
+  function applyCoverState(raw) {
+    coverAttached = String(raw || "").trim() !== "detached"
+    if (coverAttached) {
+      touchExpanded = false
+      applyTouchState()
+    }
+  }
+
+  FileView {
+    path: root.coverStatePath
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.applyCoverState(text())
+    onFileChanged: root.applyCoverState(text())
   }
 
   Loader {
@@ -114,7 +134,7 @@ BarWidget {
   WidgetButton {
     id: chevronTouchTarget
 
-    visible: root.stockTray && root.stockTray.drawerCount > 0
+    visible: root.tabletMode && root.stockTray && root.stockTray.drawerCount > 0
     x: !root.stockTray || root.vertical ? 0 : root.stockTray.drawerExtent - root.stockTray.revealExtent
     y: !root.stockTray || !root.vertical ? 0 : root.stockTray.drawerExtent - root.stockTray.revealExtent
     width: !root.stockTray ? 0 : (root.vertical ? root.width : root.stockTray.trayItemExtent)

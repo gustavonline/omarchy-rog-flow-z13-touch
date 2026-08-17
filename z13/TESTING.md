@@ -24,9 +24,10 @@ Run this list in order after installing with `z13/install.sh`.
    upward alternate flicks
    and hold/drag Space.  Flick the complete number-row set
    `! @ # $ % & / ( ) = _ ?` plus `{ }` and `; : _`: every
-   value must arrive through input-method text commit; none may open a context
-   menu or leave blue feedback behind, the journal must contain no pixman
-   rectangle warnings, and every key must still render.
+   value must arrive without opening a context menu or leaving blue feedback
+   behind; the journal must contain no pixman rectangle warnings, and every key
+   must still render. Repeat symbols in a password field: its secure content
+   purpose must use the virtual-keyboard fallback and still type correctly.
 6. Tap `☻` on the main view; Omarchy's native emoji overlay must open and insert
    the chosen emoji into the previous text field.  Tap the microphone and verify
    that Omarchy's native toggle-dictation action opens.
@@ -51,5 +52,7 @@ Run this list in order after installing with `z13/install.sh`.
 10. Suspend/resume once attached and once detached, then repeat steps 1–3.
 11. Verify the transparent topbar, keyboard icon, indicator reveal, tray reveal
    and active-window close control. Each touch must produce one state change.
+   Reattach the cover: persistent drawers must reset, their extra touch arrows
+   must disappear, and normal Omarchy mouse-hover reveal must return.
 
 Only after all checks pass may the pre-rebuild archive be deleted.

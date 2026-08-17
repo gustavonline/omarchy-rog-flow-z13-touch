@@ -12,9 +12,14 @@ BarWidget {
   readonly property var indicatorEntries: indicatorEntriesFromSettings(settings)
   property var activeIndicatorIds: []
   property var indicatorActiveStates: ({})
+  property bool indicatorAreaHovered: false
+  property bool indicatorItemHovered: false
   property bool touchRevealPinned: false
+  property bool coverAttached: true
+  readonly property string coverStatePath: Quickshell.env("XDG_RUNTIME_DIR") + "/z13-cover-state"
+  readonly property bool tabletMode: !coverAttached
   readonly property bool alwaysShowIndicators: setting("alwaysShow", false) === true
-  readonly property bool revealInactiveIndicators: alwaysShowIndicators || touchRevealPinned
+  readonly property bool revealInactiveIndicators: alwaysShowIndicators || touchRevealPinned || indicatorAreaHovered || indicatorItemHovered || (bar && bar.centerSectionRevealHeld === true && bar.centerHoverRevealSuppressed !== true)
 
   signal refreshRequested()
 
@@ -37,6 +42,26 @@ BarWidget {
       copy[key] = entry[key]
     }
     return copy
+  }
+
+  function setIndicatorAreaHovered(hovered) {
+    indicatorAreaHovered = hovered
+    if (hovered) indicatorHideTimer.stop()
+    else indicatorHideTimer.restart()
+  }
+
+  function setIndicatorItemHovered(hovered) {
+    if (hovered) {
+      indicatorItemHovered = true
+      indicatorHideTimer.stop()
+    } else {
+      indicatorHideTimer.restart()
+    }
+  }
+
+  function applyCoverState(raw) {
+    coverAttached = String(raw || "").trim() !== "detached"
+    if (coverAttached) touchRevealPinned = false
   }
 
   function indicatorEntriesFromSettings(settings) {
@@ -141,16 +166,17 @@ BarWidget {
   function refresh() { root.refreshRequested() }
 
   function toggleTouchReveal() {
+    if (!tabletMode) return
     touchRevealPinned = !touchRevealPinned
   }
 
   onIndicatorEntriesChanged: syncActiveIndicatorOrder()
 
   implicitWidth: root.vertical
-    ? Math.max(activeVerticalBlock.implicitWidth, inactiveVerticalArea.implicitWidth, touchToggleVertical.implicitWidth)
-    : activeHorizontalBlock.implicitWidth + inactiveHorizontalArea.implicitWidth + touchToggleHorizontal.implicitWidth
+    ? Math.max(activeVerticalBlock.implicitWidth, inactiveVerticalArea.implicitWidth, tabletMode ? touchToggleVertical.implicitWidth : 0)
+    : activeHorizontalBlock.implicitWidth + inactiveHorizontalArea.implicitWidth + (tabletMode ? touchToggleHorizontal.implicitWidth : 0)
   implicitHeight: root.vertical
-    ? activeVerticalBlock.implicitHeight + inactiveVerticalArea.implicitHeight + touchToggleVertical.implicitHeight
+    ? activeVerticalBlock.implicitHeight + inactiveVerticalArea.implicitHeight + (tabletMode ? touchToggleVertical.implicitHeight : 0)
     : Math.max(activeHorizontalBlock.implicitHeight, inactiveHorizontalArea.implicitHeight, touchToggleHorizontal.implicitHeight)
 
   IpcHandler {
@@ -172,6 +198,22 @@ BarWidget {
     }
   }
 
+  FileView {
+    path: root.coverStatePath
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.applyCoverState(text())
+    onFileChanged: root.applyCoverState(text())
+  }
+
+  Timer {
+    id: indicatorHideTimer
+    interval: 120
+    onTriggered: {
+      if (!root.indicatorAreaHovered) root.indicatorItemHovered = false
+    }
+  }
+
   Component.onCompleted: root.refreshRequested()
 
   Row {
@@ -179,6 +221,8 @@ BarWidget {
 
     visible: !root.vertical
     spacing: 0
+
+    HoverHandler { onHoveredChanged: root.setIndicatorAreaHovered(hovered) }
 
     Item {
       id: inactiveHorizontalArea
@@ -211,6 +255,7 @@ BarWidget {
 
     Item {
       id: touchToggleHorizontal
+      visible: root.tabletMode
       implicitWidth: Style.bar.statusSlot
       implicitHeight: root.barSize
       width: implicitWidth
@@ -245,6 +290,8 @@ BarWidget {
     visible: root.vertical
     spacing: 0
 
+    HoverHandler { onHoveredChanged: root.setIndicatorAreaHovered(hovered) }
+
     Item {
       id: inactiveVerticalArea
 
@@ -276,6 +323,7 @@ BarWidget {
 
     Item {
       id: touchToggleVertical
+      visible: root.tabletMode
       implicitWidth: root.barSize
       implicitHeight: Style.bar.statusSlot
       width: implicitWidth

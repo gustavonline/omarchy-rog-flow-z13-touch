@@ -13,32 +13,35 @@ trap 'rm -rf -- "$test_dir"' EXIT
 
 cover="$test_dir/cover"
 log="$test_dir/systemctl.log"
+state_file="$test_dir/cover-state"
 : >"$log"
 
 touch "$cover"
-Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
+Z13_COVER_DEVICE="$cover" Z13_STATE_FILE="$state_file" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
   Z13_TEST_LOG="$log" "$repo/z13/runtime/z13-keyboard-state"
 
 expected_attached=$'--user --no-block stop z13-osk.service\n--user --no-block start omarchy-fcitx5.service'
 [[ $(<"$log") == "$expected_attached" ]]
+[[ $(<"$state_file") == attached ]]
 
 rm -f -- "$cover"
 : >"$log"
-Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
+Z13_COVER_DEVICE="$cover" Z13_STATE_FILE="$state_file" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
   Z13_TEST_LOG="$log" "$repo/z13/runtime/z13-keyboard-state"
 
 expected_detached=$'--user --no-block stop omarchy-fcitx5.service\n--user --no-block start z13-osk.service'
 [[ $(<"$log") == "$expected_detached" ]]
+[[ $(<"$state_file") == detached ]]
 
 : >"$log"
-Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
+Z13_COVER_DEVICE="$cover" Z13_STATE_FILE="$state_file" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
   Z13_OSK_ACTION=restart Z13_TEST_LOG="$log" \
   "$repo/z13/runtime/z13-keyboard-state"
 
 expected_install_refresh=$'--user --no-block stop omarchy-fcitx5.service\n--user --no-block restart z13-osk.service'
 [[ $(<"$log") == "$expected_install_refresh" ]]
 
-if Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
+if Z13_COVER_DEVICE="$cover" Z13_STATE_FILE="$state_file" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
   Z13_OSK_ACTION=invalid Z13_TEST_LOG="$log" \
   "$repo/z13/runtime/z13-keyboard-state" >/dev/null 2>&1; then
   printf 'invalid Z13_OSK_ACTION unexpectedly succeeded\n' >&2

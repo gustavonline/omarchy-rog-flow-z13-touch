@@ -14,6 +14,13 @@ Git repository rather than a collection of edits under `/usr/share`.
 - Tablet-only automatic rotation while laptop mode remains landscape.
 - A topbar keyboard toggle, touch-toggleable system tray and indicators, and a
   touch-friendly active-window close control.
+- Stock hover behaviour whenever the keyboard cover is attached; persistent
+  one-tap topbar drawers are enabled only in tablet mode.
+- Password/PIN-safe symbol entry that falls back to physical-style virtual key
+  events when a secure field rejects input-method text commits.
+
+The suite intentionally contains no dock, launcher replacement or lock-screen
+fork. Those belong to Omarchy itself rather than this hardware integration.
 
 The repository root is a valid Omarchy `bar-widget` plugin. The hardware layer
 cannot be installed implicitly by `omarchy plugin add`: Omarchy deliberately

@@ -153,11 +153,12 @@ pages never changes key height or moves the persistent bottom strip.
   ) = _ ?`; the bracket keys similarly produce `{ }`, and the punctuation keys
   produce `; : _`.  Rare symbols remain on `.?123`/`#+=`.  Hardware alternates
   remain on
-  the FN row.  Text symbols use
-  `zwp_input_method_v2.commit_string`, never a temporary COMP/Menu keymap, so
-  asynchronous Electron clients cannot turn `$`, `?` or `@` into a context
-  menu.  The full layout is redrawn after every flick, preventing stale blue
-  swipe feedback.
+  the FN row. Text symbols normally use `zwp_input_method_v2.commit_string`,
+  so asynchronous Electron clients cannot turn `$`, `?` or `@` into a context
+  menu. Password and PIN fields are the deliberate exception: clients may
+  reject secure input-method commits, so those purposes use the existing
+  physical-style virtual-keyboard fallback. The full layout is redrawn after
+  every flick, preventing stale blue swipe feedback.
 - Hold Space for 280 ms and drag: move the caret using arrow events.
 - Hold Backspace or Delete: repeat after 420 ms, then every 55 ms.
 - Tap Emoji on the main view: open Omarchy's built-in emoji overlay through its
@@ -195,6 +196,12 @@ Hyprland every second.  Its one-shot state service applies exactly one state:
 
 - cover present: stop `z13-osk.service`, start `omarchy-fcitx5.service`;
 - cover absent: stop Fcitx, start `z13-osk.service`.
+
+The same event-driven transition writes `z13-cover-state` under
+`$XDG_RUNTIME_DIR`. The two topbar wrappers watch that file: with the cover
+attached they retain Omarchy's stock hover behaviour, while a detached cover
+enables persistent one-tap indicator and tray drawers. No polling service is
+introduced.
 
 The OSK service has a negated `ConditionPathExists` for the cover, owns the
 single keyboard process and uses `Restart=on-failure`.  Omarchy's supported

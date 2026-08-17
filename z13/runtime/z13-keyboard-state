@@ -5,6 +5,7 @@ set -euo pipefail
 readonly cover="${Z13_COVER_DEVICE:-/dev/input/by-id/usb-ASUSTeK_Computer_Inc._GZ302EA-Keyboard-if02-event-kbd}"
 readonly systemctl_cmd="${Z13_SYSTEMCTL:-systemctl}"
 readonly osk_action="${Z13_OSK_ACTION:-start}"
+readonly state_file="${Z13_STATE_FILE:-${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/z13-cover-state}"
 
 if [[ "$osk_action" != "start" && "$osk_action" != "restart" ]]; then
   printf 'z13-keyboard-state: invalid Z13_OSK_ACTION: %s\n' "$osk_action" >&2
@@ -12,9 +13,18 @@ if [[ "$osk_action" != "start" && "$osk_action" != "restart" ]]; then
 fi
 
 if [[ -e "$cover" ]]; then
+  state=attached
   "$systemctl_cmd" --user --no-block stop z13-osk.service
   "$systemctl_cmd" --user --no-block start omarchy-fcitx5.service
 else
+  state=detached
   "$systemctl_cmd" --user --no-block stop omarchy-fcitx5.service
   "$systemctl_cmd" --user --no-block "$osk_action" z13-osk.service
 fi
+
+# Bar widgets use this tiny runtime state to keep mouse/cover behaviour stock
+# while enabling persistent one-tap drawers only in tablet mode.
+mkdir -p -- "$(dirname -- "$state_file")"
+tmp_state="${state_file}.tmp.$$"
+printf '%s\n' "$state" >"$tmp_state"
+mv -f -- "$tmp_state" "$state_file"

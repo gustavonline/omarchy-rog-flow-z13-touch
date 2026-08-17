@@ -54,6 +54,7 @@ static struct wp_viewporter *viewporter;
 static struct zwp_input_method_manager_v2 *im_mgr;
 static struct zwp_input_method_v2 *input_method;
 static uint32_t input_method_serial = 0;
+static uint32_t input_content_purpose = 0;
 static bool popup_xdg_surface_configured;
 static bool layer_surface_configured;
 
@@ -175,6 +176,12 @@ static bool
 im_commit_codepoint(uint32_t codepoint)
 {
     char text[5];
+    /* Some clients deliberately reject input-method commit strings in secure
+     * fields.  Fall back to the virtual-keyboard keymap path for password and
+     * PIN purposes, which behaves like a physical key and keeps the text out
+     * of the input-method transaction.  Purpose values follow text-input-v3. */
+    if (input_content_purpose == 8 || input_content_purpose == 9)
+        return false;
     if (!input_method || !visibility_policy.input_method_active ||
         !encode_utf8(codepoint, text))
         return false;
@@ -774,6 +781,7 @@ im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
     fprintf(stderr, "Input method deactivated\n");
     z13_visibility_deactivate(&visibility_policy);
+    input_content_purpose = 0;
     cancel_touch_reopen();
     schedule_delayed_hide();
 }
@@ -792,6 +800,9 @@ void im_text_change_cause(void *data, struct zwp_input_method_v2 *zwp_input_meth
 void im_content_type(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
                      uint32_t hint, uint32_t purpose)
 {
+    input_content_purpose = purpose;
+    fprintf(stderr, "Input content type hint=%u purpose=%u%s\n", hint, purpose,
+            (purpose == 8 || purpose == 9) ? " (secure)" : "");
 }
 
 void
