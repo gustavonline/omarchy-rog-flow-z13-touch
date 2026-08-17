@@ -60,6 +60,7 @@
           {"label":"↵","code":"KEY_ENTER","style":"special","width":1.5}
         ],
         [
+          {"type":"pad","width":1.0},
           {"label":"123","type":"layout","target":"Numbers","style":"special","width":2.0},
           {"label":"z","shift":"Z","code":"KEY_Z"},
           {"label":"x","shift":"X","flick":"~","code":"KEY_X","flick_text":"~"},
@@ -71,7 +72,7 @@
           {"label":",","shift":";","code":"KEY_COMMA"},
           {"label":".","shift":":","code":"KEY_DOT"},
           {"label":"-","shift":"_","code":"KEY_SLASH"},
-          {"type":"pad","width":2.0}
+          {"type":"pad","width":1.0}
         ],
         [
           {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.5},

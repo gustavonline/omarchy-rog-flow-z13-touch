@@ -52,7 +52,7 @@ email layouts are intentionally unsupported.
 | 1 | `. 1 2 3 4 5 6 7 8 9 0 - + .` |
 | 2 | `Tab q w e r t y u i o p å Backspace` |
 | 3 | `Shift a s d f g h j k l æ ø Return` |
-| 4 | `123 z x c v b n m , . - ...` |
+| 4 | `. 123 z x c v b n m , . - .` |
 | 5 | `FN Super Space #+= Hide` |
 
 All character, number and punctuation keys use exactly the same width.  Rare
