@@ -66,7 +66,6 @@ struct clr_scheme {
 struct key {
 	const char *label;       // primary label
 	const char *shift_label; // secondary label
-	const char *flick_label; // small alternate label emitted by a downward flick
 	const double width;      // relative width (1.0)
 	const enum key_type type;
 
@@ -78,12 +77,16 @@ struct key {
 	struct layout *layout;   // pointer back to the parent layout that holds this
 	                         // key
 	const uint32_t code_mod; /* modifier to force when this key is pressed */
+	uint8_t scheme;          // index of the scheme to use
+	bool reset_mod;          /* reset modifiers when clicked */
+
+	/* Z13 extensions live after every upstream positional field.  Keeping the
+	 * original prefix ABI intact lets the stock layouts continue to compile. */
+	const char *flick_label; // small alternate label emitted by a downward flick
 	const uint32_t flick_code;
 	const uint32_t flick_codepoint;
 	const uint32_t *macro_codes;
 	const uint8_t macro_len;
-	uint8_t scheme;          // index of the scheme to use
-	bool reset_mod;          /* reset modifiers when clicked */
 
 	// actual coordinates on the surface (pixels), will be computed automatically
 	// for all keys
