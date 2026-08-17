@@ -181,6 +181,8 @@ im_commit_codepoint(uint32_t codepoint)
 
     zwp_input_method_v2_commit_string(input_method, text);
     zwp_input_method_v2_commit(input_method, input_method_serial);
+    fprintf(stderr, "Committed flick/copy text U+%04X through input method\n",
+            codepoint);
     return true;
 }
 
@@ -742,6 +744,7 @@ static const struct wp_fractional_scale_v1_listener
 void
 im_activate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
+    fprintf(stderr, "Input method activated\n");
     z13_visibility_activate(&visibility_policy);
     cancel_delayed_hide();
     cancel_touch_reopen();
@@ -751,6 +754,7 @@ im_activate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 void
 im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
+    fprintf(stderr, "Input method deactivated\n");
     z13_visibility_deactivate(&visibility_policy);
     cancel_touch_reopen();
     schedule_delayed_hide();
