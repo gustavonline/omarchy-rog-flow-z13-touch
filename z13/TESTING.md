@@ -7,10 +7,10 @@ Run this list in order after installing with `z13/install.sh`.
 2. Detach the cover.  `z13-osk.service` becomes active exactly once and Fcitx
    stops.  The keyboard remains hidden until a text field is touched.
 3. In ChatGPT, Zen, Chromium, a terminal and a native GTK application:
-   touch a field, type Danish text, press Return, wait 500 ms, and touch the
-   same field again.  If that client sends no surrounding-text refresh, make a
-   cursor, content or focus change and touch it again.  Show/hide must remain
-   stable without a global touch hook.
+   touch a field, type Danish text, press Return, wait 500 ms, tap Hide, and
+   touch the same field directly without scrolling or changing focus first.
+   The keyboard must reappear exactly once.  Repeat after an automatic
+   focus-loss hide; it must remain hidden until the field activates again.
 4. Confirm the four fixed layers and their labels against `layout.json`.
 5. Confirm one-shot Shift, double-tap Caps Lock, Super then `W`, held
    Backspace (`⌫`), held forward Delete (`⌦`), upward alternate flicks and

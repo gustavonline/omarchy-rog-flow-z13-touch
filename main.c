@@ -76,6 +76,11 @@ static int rounding = DEFAULT_ROUNDING;
 static bool hidden = false;
 static bool im_auto = false;
 static bool input_method_active = false;
+/* Distinguish an explicit Hide-key request from automatic focus-loss hiding.
+ * Some clients answer a second tap in an already-focused field with only an
+ * input-method `done` batch, so the next batch may reopen a manually hidden
+ * keyboard.  Automatic hiding must stay hidden until a fresh activation. */
+static bool manually_hidden = false;
 static double forced_scale = 0;
 static struct key *touch_space_key = NULL;
 static uint32_t touch_space_started = 0;
@@ -674,6 +679,7 @@ void
 im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
     input_method_active = false;
+    manually_hidden = false;
     schedule_delayed_hide();
 }
 
@@ -682,10 +688,12 @@ im_surrounding_text(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
                     const char *text, uint32_t cursor, uint32_t anchor)
 {
     /* A second tap in an already-focused field does not emit activate again,
-     * but clients do refresh surrounding text.  Use that refresh to restore a
-     * manually hidden keyboard without reacting to every IM commit. */
-    if (input_method_active && hidden)
+     * but clients may refresh surrounding text.  Use that refresh to restore
+     * a hidden keyboard while text input remains active. */
+    if (input_method_active && hidden) {
+        fprintf(stderr, "Reopening keyboard from surrounding-text update\n");
         show();
+    }
 }
 
 void im_text_change_cause(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
@@ -701,6 +709,13 @@ void im_content_type(void *data, struct zwp_input_method_v2 *zwp_input_method_v2
 void
 im_done(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
+    /* A client may commit a new text-input generation without repeating any
+     * of activate/surrounding-text/content-type.  This is the standards-based
+     * signal available for a second tap in an unchanged focused field. */
+    if (input_method_active && hidden && manually_hidden) {
+        fprintf(stderr, "Reopening manually hidden keyboard from input-method done\n");
+        show();
+    }
 }
 
 void
@@ -936,6 +951,8 @@ show()
     if (layer_surface) {
         return;
     }
+
+    manually_hidden = false;
 
     refresh_available_dimension();
     redimension_keyboard();
@@ -1394,9 +1411,11 @@ main(int argc, char **argv)
 
             if (read(fds[SIGNAL_FD].fd, &si, sizeof(si)) != sizeof(si))
                 fprintf(stderr, "Signal read error: %d", errno);
-            else if (si.ssi_signo == SIGUSR1)
+            else if (si.ssi_signo == SIGUSR1) {
+                manually_hidden = true;
+                fprintf(stderr, "Manually hiding keyboard\n");
                 hide();
-            else if (si.ssi_signo == SIGUSR2)
+            } else if (si.ssi_signo == SIGUSR2)
                 show();
             else if (si.ssi_signo == SIGRTMIN)
                 toggle_visibility();
@@ -1419,8 +1438,10 @@ main(int argc, char **argv)
 
         if (fds[HIDE_DELAY_FD].revents & POLLIN) {
             uint64_t expirations = 0;
-            if (read(hide_delay_fd, &expirations, sizeof(expirations)) == sizeof(expirations))
+            if (read(hide_delay_fd, &expirations, sizeof(expirations)) == sizeof(expirations)) {
+                manually_hidden = false;
                 hide();
+            }
         }
     }
 

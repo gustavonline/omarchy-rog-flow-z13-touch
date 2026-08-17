@@ -103,11 +103,11 @@ while held.
 
 - Tap a text field: show once through `zwp_input_method_v2`.
 - Leave text input: wait 500 ms before hiding to avoid Enter/focus flicker.
-- Tap the same focused field after manual hide: show again when the client
-  refreshes its surrounding-text state.  Wayland provides no global touch
-  event to an unmapped keyboard, so clients which send no input-method update
-  require a focus, cursor or content change; the implementation deliberately
-  avoids a compositor-wide touch hook.
+- Tap the same focused field after manual hide: show again on the client's next
+  input-method generation.  Clients may express that generation through
+  activate, surrounding-text or only `done`; all three paths are handled.
+  Automatic focus-loss hiding is tracked separately and never reopens from a
+  stray `done` event.  No compositor-wide touch hook is used.
 - Tap Shift: uppercase the next character; double-tap: Caps Lock.
 - Flick up on a key with an alternate label: preview and enter its literal
   symbol or hardware action.  The temporary text keysym stays mapped until the
@@ -165,10 +165,9 @@ Installation is not complete until all checks pass:
 1. JSON schema/generator test, cover-state transition test and clean compilation.
 2. `systemd-analyze --user verify` for every unit.
 3. Attach, detach, attach and detach again without duplicate processes.
-4. Auto-show, auto-hide and manual hide in ChatGPT, Chrome, Zen, a terminal and
-   a native GTK application.  Same-field re-show must work whenever the client
-   refreshes surrounding-text state; clients which emit no new protocol event
-   must recover on the next focus, cursor or content change.
+4. Auto-show, auto-hide, manual hide and direct same-field re-show in ChatGPT,
+   Chrome, Zen, a terminal and a native GTK application.  Verify both clients
+   that refresh surrounding text and clients that commit only a `done` batch.
 5. Every key in all four views emits the documented event; every visible corner
    symbol is actionable through an upward flick, including all twelve ROG
    hardware actions.
