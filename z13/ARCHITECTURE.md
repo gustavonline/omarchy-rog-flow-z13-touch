@@ -49,25 +49,28 @@ email layouts are intentionally unsupported.
 
 | Row | Keys |
 | --- | --- |
-| 1 | `½ 1 2 3 4 5 6 7 8 9 0 + ´ Backspace` |
-| 2 | `TAB q w e r t y u i o p å ¨` |
-| 3 | `CAPS a s d f g h j k l æ ø ' ENTER` |
-| 4 | `SHIFT < z x c v b n m , . - SHIFT` |
-| 5 | `CTRL FN Super ALT Space ALT GR Left Up Down Right Hide` |
+| 1 | `1 2 3 4 5 6 7 8 9 0 - + Backspace` |
+| 2 | `Tab q w e r t y u i o p å` |
+| 3 | `Shift a s d f g h j k l æ ø Return` |
+| 4 | `z x c v b n m , . -` |
+| 5 | `123 FN Super Space Hide` |
 
-The first four rows follow the Danish XKB symbols and the physical Nordic ISO
-order.  Shift is one-shot; double-tap Shift toggles Caps Lock.  The Windows
+All character, number and punctuation keys use exactly the same width.  Rare
+ISO dead keys are available on the symbol layer instead of occupying the main
+view.  Shift is one-shot; double-tap Shift toggles Caps Lock.  The Windows
 glyph is the Linux Super key and is one-shot, so Super, then `W`, closes a
-window without requiring two simultaneous fingers.
+window without requiring two simultaneous fingers.  Tab remains as the compact
+`⇥` symbol because it is useful in forms, terminals and code editors.  Desktop
+modifiers and arrows live only on the function view.
 
 ### Numbers
 
 | Row | Keys |
 | --- | --- |
-| 1 | `1 2 3 4 5 6 7 8 9 0` |
+| 1 | `1 2 3 4 5 6 7 8 9 0 Backspace` |
 | 2 | `- / : ; ( ) kr & @ \"` |
-| 3 | `#+= . , ? ! ' Backspace ENTER` |
-| 4 | `ABC FN Super ALT Space ALT GR Hide` |
+| 3 | `#+= . , ? ! ' Backspace Return` |
+| 4 | `ABC FN Super Space Hide` |
 
 ### Symbols
 
@@ -75,31 +78,42 @@ window without requiring two simultaneous fingers.
 | --- | --- |
 | 1 | `[ ] { } # % ^ * + =` |
 | 2 | `_ \\ | ~ < > € £ ¥ •` |
-| 3 | `` ` · √ π ÷ × § © ® Backspace ENTER `` |
-| 4 | `123 ABC FN Super Space ALT GR Hide` |
+| 3 | `` ` · √ π ÷ × § © ® Backspace Return `` |
+| 4 | `123 ABC FN Super Space Hide` |
 
 ### Functions
 
 | Row | Keys |
 | --- | --- |
-| 1 | `ESC F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 DEL` |
-| 2 | `TAB CAPS INS HOME END PGUP PGDN SHOT Backspace ENTER` |
-| 3 | `CTRL Super ALT ALT GR SHIFT Left Up Down Right` |
+| 1 | `ESC F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 Delete` |
+| 2 | `Tab Caps INS HOME END PGUP PGDN Backspace Return ... Up` |
+| 3 | `CTRL Super ALT ALT GR Shift ... Left Down Right` |
 | 4 | `ABC 123 #+= Space Hide` |
 
-Function labels are uppercase.  Shift, Ctrl, Alt, Alt Gr and Super latch for
-exactly one following key unless tapped again.  Caps Lock remains active until
-toggled.  Backspace and Delete repeat while held.
+Function labels are uppercase.  Flicking F1–F12 upward emits the same hardware
+actions as the Nordic ROG cover: speaker mute, volume down/up, microphone mute,
+ROG profile, screenshot, display brightness down/up, display menu, touchpad,
+keyboard light and airplane mode.  The arrows form the physical inverted-T
+cluster at the far right.  Shift, Ctrl, Alt, Alt Gr and Super latch for exactly
+one following key unless tapped again.  Caps Lock remains active until toggled.
+Backspace (`⌫`) deletes left, while Delete (`⌦`) deletes right; both repeat
+while held.
 
 ## iPad-inspired interactions
 
 - Tap a text field: show once through `zwp_input_method_v2`.
 - Leave text input: wait 500 ms before hiding to avoid Enter/focus flicker.
-- Tap the same focused field after manual hide: show again.
+- Tap the same focused field after manual hide: show again when the client
+  refreshes its surrounding-text state.  Wayland provides no global touch
+  event to an unmapped keyboard, so clients which send no input-method update
+  require a focus, cursor or content change; the implementation deliberately
+  avoids a compositor-wide touch hook.
 - Tap Shift: uppercase the next character; double-tap: Caps Lock.
-- Flick up on a key with an alternate label: preview and enter that literal
-  symbol.  The alternate is emitted directly and never creates a drawable
-  zero-sized key.
+- Flick up on a key with an alternate label: preview and enter its literal
+  symbol or hardware action.  The temporary text keysym stays mapped until the
+  next text gesture so asynchronous clients can never reinterpret it as a
+  context-menu key.  The full layout is redrawn after every flick, preventing
+  stale blue swipe feedback.
 - Hold Space for 280 ms and drag: move the caret using arrow events.
 - Hold Backspace or Delete: repeat after 420 ms, then every 55 ms.
 - Tap Hide: hide without changing focus or layout.
@@ -151,10 +165,13 @@ Installation is not complete until all checks pass:
 1. JSON schema/generator test, cover-state transition test and clean compilation.
 2. `systemd-analyze --user verify` for every unit.
 3. Attach, detach, attach and detach again without duplicate processes.
-4. Auto-show, auto-hide, manual hide and same-field re-show in ChatGPT, Chrome,
-   Zen, a terminal and a native GTK application.
-5. Every key in all four views emits the documented event; every small corner
-   symbol is actionable through an upward flick.
+4. Auto-show, auto-hide and manual hide in ChatGPT, Chrome, Zen, a terminal and
+   a native GTK application.  Same-field re-show must work whenever the client
+   refreshes surrounding-text state; clients which emit no new protocol event
+   must recover on the next focus, cursor or content change.
+5. Every key in all four views emits the documented event; every visible corner
+   symbol is actionable through an upward flick, including all twelve ROG
+   hardware actions.
 6. One-shot Shift, direct/double-tap Caps Lock, Super shortcuts and held Delete
    work.
 7. Light and dark screenshots show crisp text, Omarchy-gap geometry and the

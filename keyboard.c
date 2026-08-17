@@ -644,13 +644,19 @@ kbd_emit_flick(struct kbd *kb, struct key *k, uint32_t time)
     }
 
     if (k->flick_codepoint) {
+        /* Keep COMP mapped to the emitted codepoint until the next text
+         * gesture.  Restoring the normal keymap immediately after releasing
+         * COMP races clients which consume the event asynchronously: they can
+         * then see the normal Menu keysym and open a context menu instead of
+         * receiving the requested character.  Only COMP changes in this
+         * temporary map, so leaving it installed does not affect ordinary
+         * typing; the next flick/copy replaces it deterministically. */
         create_and_upload_keymap(kb, kb->layout->keymap_name,
                                  k->flick_codepoint);
         zwp_virtual_keyboard_v1_key(kb->vkbd, time, 127,
                                     WL_KEYBOARD_KEY_STATE_PRESSED);
         zwp_virtual_keyboard_v1_key(kb->vkbd, time, 127,
                                     WL_KEYBOARD_KEY_STATE_RELEASED);
-        create_and_upload_keymap(kb, kb->layout->keymap_name, 0);
     } else {
         zwp_virtual_keyboard_v1_key(kb->vkbd, time, k->flick_code,
                                     WL_KEYBOARD_KEY_STATE_PRESSED);
@@ -658,8 +664,9 @@ kbd_emit_flick(struct kbd *kb, struct key *k, uint32_t time)
                                     WL_KEYBOARD_KEY_STATE_RELEASED);
     }
 
-    if (transient_mods)
-        kbd_draw_layout(kb);
+    /* A flick paints a transient blue swipe state.  Always redraw the whole
+     * layout after emission so no stale feedback survives in the surface. */
+    kbd_draw_layout(kb);
 }
 
 void
