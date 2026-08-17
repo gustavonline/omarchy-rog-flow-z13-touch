@@ -2,12 +2,13 @@
 
 set -euo pipefail
 
-readonly cover='/dev/input/by-id/usb-ASUSTeK_Computer_Inc._GZ302EA-Keyboard-if02-event-kbd'
+readonly cover="${Z13_COVER_DEVICE:-/dev/input/by-id/usb-ASUSTeK_Computer_Inc._GZ302EA-Keyboard-if02-event-kbd}"
+readonly systemctl_cmd="${Z13_SYSTEMCTL:-systemctl}"
 
 if [[ -e "$cover" ]]; then
-  systemctl --user --no-block stop z13-osk.service
-  systemctl --user --no-block start omarchy-fcitx5.service
+  "$systemctl_cmd" --user --no-block stop z13-osk.service
+  "$systemctl_cmd" --user --no-block start omarchy-fcitx5.service
 else
-  systemctl --user --no-block stop omarchy-fcitx5.service
-  systemctl --user --no-block start z13-osk.service
+  "$systemctl_cmd" --user --no-block stop omarchy-fcitx5.service
+  "$systemctl_cmd" --user --no-block start z13-osk.service
 fi

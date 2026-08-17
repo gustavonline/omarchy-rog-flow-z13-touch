@@ -5,6 +5,7 @@ set -euo pipefail
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 
 python3 "$repo/z13/tools/verify_layout.py" "$repo/z13/layout.json"
+"$repo/z13/tools/verify_runtime.sh"
 python3 "$repo/z13/tools/generate_layout.py" \
   "$repo/z13/layout.json" "$repo/layout.z13.h"
 make -C "$repo" LAYOUT=z13

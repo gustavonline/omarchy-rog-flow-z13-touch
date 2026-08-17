@@ -134,12 +134,14 @@ The OSK service has a negated `ConditionPathExists` for the cover, owns the
 single keyboard process and uses `Restart=on-failure`.  Omarchy's supported
 `theme-set` hook restarts the OSK only when it is already active.  There is no
 timer, polling loop, Hyprland override or edit under `/usr/share/omarchy`.
+The state script accepts test-only environment overrides, allowing both cover
+transitions to be verified without spoofing or removing a real `/dev` device.
 
 ## Verification gate
 
 Installation is not complete until all checks pass:
 
-1. JSON schema/generator test and clean compilation.
+1. JSON schema/generator test, cover-state transition test and clean compilation.
 2. `systemd-analyze --user verify` for every unit.
 3. Attach, detach, attach and detach again without duplicate processes.
 4. Auto-show, auto-hide, manual hide and same-field re-show in ChatGPT, Chrome,
