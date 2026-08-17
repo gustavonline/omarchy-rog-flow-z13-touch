@@ -42,6 +42,15 @@ The installer may create only these active user files:
 - `~/.config/systemd/user/z13-osk.service`
 - `~/.config/systemd/user/z13-keyboard-state.service`
 - `~/.config/systemd/user/z13-keyboard-watch.path`
+- `~/.local/bin/z13-tablet-rotation`
+- `~/.config/systemd/user/z13-tablet-rotation.service`
+- `~/.config/omarchy/plugins/io.github.gustavonline.z13-touch-tray/`
+- `~/.config/omarchy/plugins/io.github.gustavonline.z13-touch-indicators/`
+- `~/.config/omarchy/plugins/io.github.gustavonline.z13-touch-active-window/`
+
+The setup script also replaces only the relevant bar-widget IDs in
+`~/.config/omarchy/shell.json`; the removal script restores Omarchy's stock
+tray, indicators and active-window widgets.
 
 The source repository lives at
 `~/.config/omarchy/plugins/io.github.gustavonline.rog-flow-z13-touch`. One

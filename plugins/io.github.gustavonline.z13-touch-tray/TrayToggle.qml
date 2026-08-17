@@ -42,12 +42,15 @@ BarWidget {
   }
 
   FileView {
+    id: coverStateFile
     path: root.coverStatePath
     watchChanges: true
     printErrors: false
     onLoaded: root.applyCoverState(text())
-    onFileChanged: root.applyCoverState(text())
+    onFileChanged: reload()
   }
+
+  Component.onCompleted: coverStateFile.reload()
 
   Loader {
     id: stockTrayLoader
@@ -91,7 +94,11 @@ BarWidget {
     ignoreUnknownSignals: true
 
     function onExpandedChanged() {
-      if (root.touchExpanded && root.stockTray && !root.stockTray.expanded)
+      // A touchscreen leaves a synthetic hover position behind. While the
+      // cover is detached, the explicit one-tap state is authoritative in
+      // both directions, preventing a brief close/reopen flicker. Attached
+      // mode remains entirely stock and hover-driven.
+      if (root.tabletMode && root.stockTray && root.stockTray.expanded !== root.touchExpanded)
         Qt.callLater(root.applyTouchState)
     }
   }
@@ -125,6 +132,14 @@ BarWidget {
         revealExtent: root.stockTray.revealExtent,
         touchExpanded: root.touchExpanded,
         visible: root.stockTray.visible
+      })
+    }
+
+    function tabletState(): string {
+      return JSON.stringify({
+        coverAttached: root.coverAttached,
+        tabletMode: root.tabletMode,
+        statePath: root.coverStatePath
       })
     }
   }

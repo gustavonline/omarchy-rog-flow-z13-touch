@@ -19,7 +19,12 @@ BarWidget {
   readonly property string coverStatePath: Quickshell.env("XDG_RUNTIME_DIR") + "/z13-cover-state"
   readonly property bool tabletMode: !coverAttached
   readonly property bool alwaysShowIndicators: setting("alwaysShow", false) === true
-  readonly property bool revealInactiveIndicators: alwaysShowIndicators || touchRevealPinned || indicatorAreaHovered || indicatorItemHovered || (bar && bar.centerSectionRevealHeld === true && bar.centerHoverRevealSuppressed !== true)
+  // Touch leaves a synthetic pointer over the bar. In tablet mode that must
+  // not momentarily reopen a drawer that the user just closed with one tap.
+  // With the cover attached, retain Omarchy's stock hover reveal.
+  readonly property bool pointerReveal: !tabletMode && (indicatorAreaHovered || indicatorItemHovered)
+  readonly property bool shellCenterReveal: !tabletMode && bar && bar.centerSectionRevealHeld === true && bar.centerHoverRevealSuppressed !== true
+  readonly property bool revealInactiveIndicators: alwaysShowIndicators || touchRevealPinned || pointerReveal || shellCenterReveal
 
   signal refreshRequested()
 
@@ -196,14 +201,32 @@ BarWidget {
       root.toggleTouchReveal()
       return root.touchRevealPinned ? "shown" : "hidden"
     }
+
+    function tabletState(): string {
+      return JSON.stringify({
+        coverAttached: root.coverAttached,
+        tabletMode: root.tabletMode,
+        statePath: root.coverStatePath
+      })
+    }
+
+    function revealState(): string {
+      return JSON.stringify({
+        effective: root.revealInactiveIndicators,
+        pinned: root.touchRevealPinned,
+        pointer: root.pointerReveal,
+        shellCenter: root.shellCenterReveal
+      })
+    }
   }
 
   FileView {
+    id: coverStateFile
     path: root.coverStatePath
     watchChanges: true
     printErrors: false
     onLoaded: root.applyCoverState(text())
-    onFileChanged: root.applyCoverState(text())
+    onFileChanged: reload()
   }
 
   Timer {
@@ -214,7 +237,10 @@ BarWidget {
     }
   }
 
-  Component.onCompleted: root.refreshRequested()
+  Component.onCompleted: {
+    coverStateFile.reload()
+    root.refreshRequested()
+  }
 
   Row {
     id: horizontalIndicators
@@ -253,13 +279,19 @@ BarWidget {
       reportActiveState: !root.vertical
     }
 
-    Item {
+    WidgetButton {
       id: touchToggleHorizontal
       visible: root.tabletMode
-      implicitWidth: Style.bar.statusSlot
-      implicitHeight: root.barSize
-      width: implicitWidth
-      height: implicitHeight
+      bar: root.bar
+      fixedWidth: Style.bar.statusSlot
+      fixedHeight: root.barSize
+      hasVisualContent: true
+      labelVisible: false
+      tooltipText: root.touchRevealPinned ? "Hide status controls" : "Show status controls"
+
+      onPressed: function(button) {
+        if (button === Qt.LeftButton) root.toggleTouchReveal()
+      }
 
       Text {
         anchors.centerIn: parent
@@ -270,17 +302,6 @@ BarWidget {
         renderType: Text.NativeRendering
       }
 
-      MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.LeftButton
-        preventStealing: true
-        propagateComposedEvents: false
-        cursorShape: Qt.PointingHandCursor
-        onClicked: function(mouse) {
-          root.toggleTouchReveal()
-          mouse.accepted = true
-        }
-      }
     }
   }
 
@@ -321,13 +342,19 @@ BarWidget {
       reportActiveState: root.vertical
     }
 
-    Item {
+    WidgetButton {
       id: touchToggleVertical
       visible: root.tabletMode
-      implicitWidth: root.barSize
-      implicitHeight: Style.bar.statusSlot
-      width: implicitWidth
-      height: implicitHeight
+      bar: root.bar
+      fixedWidth: root.barSize
+      fixedHeight: Style.bar.statusSlot
+      hasVisualContent: true
+      labelVisible: false
+      tooltipText: root.touchRevealPinned ? "Hide status controls" : "Show status controls"
+
+      onPressed: function(button) {
+        if (button === Qt.LeftButton) root.toggleTouchReveal()
+      }
 
       Text {
         anchors.centerIn: parent
@@ -338,17 +365,6 @@ BarWidget {
         renderType: Text.NativeRendering
       }
 
-      MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.LeftButton
-        preventStealing: true
-        propagateComposedEvents: false
-        cursorShape: Qt.PointingHandCursor
-        onClicked: function(mouse) {
-          root.toggleTouchReveal()
-          mouse.accepted = true
-        }
-      }
     }
   }
 

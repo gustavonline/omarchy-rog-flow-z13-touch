@@ -1,3 +1,12 @@
+# ROG Flow Z13 Touch v0.2.1 - 2026-08-17
+
+- Keep the cover-state file watch alive across keyboard attach/detach events.
+- Route tablet topbar controls through Omarchy's native widget touch handling.
+- Make explicit one-tap drawer state authoritative in tablet mode, removing
+  synthetic-hover flicker while retaining stock hover behaviour with the cover
+  attached.
+- Add regression checks for tablet-only indicator reveal behaviour.
+
 # v0.20 - 2026-07-24
 
 This release implements automatic focus-based visibility toggling, thanks to Christian Duerr. Start wvkbd with the `--auto` parameter to opt-in for this feature (it is not the default yet).
@@ -350,4 +359,3 @@ Minor bugfix release, man page installation sometimes failed, no functional chan
 - Added a navigation layer for keyboard arrow keys/page up&down
 
 # v0.2 - 2021-10-20
-

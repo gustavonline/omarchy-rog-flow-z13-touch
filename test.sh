@@ -36,6 +36,13 @@ for plugin in "$repo"/plugins/*; do
   omarchy plugin validate "$plugin"
 done
 
+# Tablet touch must be governed only by the explicit one-tap state. Omarchy's
+# center-wide hover hold can be set by a synthetic pointer left behind after a
+# tap on the right tray; allowing it here causes the middle indicators to flash.
+indicators_qml="$repo/plugins/io.github.gustavonline.z13-touch-indicators/Indicators.qml"
+rg -F 'readonly property bool shellCenterReveal: !tabletMode' "$indicators_qml" >/dev/null
+rg -F 'alwaysShowIndicators || touchRevealPinned || pointerReveal || shellCenterReveal' "$indicators_qml" >/dev/null
+
 qml_lint=$(command -v qmllint || true)
 if [[ -z "$qml_lint" && -x /usr/lib/qt6/bin/qmllint ]]; then
   qml_lint=/usr/lib/qt6/bin/qmllint

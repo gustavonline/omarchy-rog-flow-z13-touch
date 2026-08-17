@@ -25,6 +25,6 @@ fi
 # Bar widgets use this tiny runtime state to keep mouse/cover behaviour stock
 # while enabling persistent one-tap drawers only in tablet mode.
 mkdir -p -- "$(dirname -- "$state_file")"
-tmp_state="${state_file}.tmp.$$"
-printf '%s\n' "$state" >"$tmp_state"
-mv -f -- "$tmp_state" "$state_file"
+# FileView watches this pathname for live tablet-mode changes. Updating the
+# existing file preserves that watch across every cover attach/detach event.
+printf '%s\n' "$state" >"$state_file"
