@@ -33,6 +33,12 @@ systemd-analyze --user verify \
 
 systemctl --user daemon-reload
 systemctl --user enable z13-keyboard-state.service z13-keyboard-watch.path
-systemctl --user start z13-keyboard-watch.path z13-keyboard-state.service
+systemctl --user start z13-keyboard-watch.path
+
+# Apply the current cover state directly.  A detached cover needs restart here
+# (rather than start) so an already-running process picks up the freshly
+# installed binary immediately.  Normal device-change events retain the
+# state script's non-disruptive start behavior.
+Z13_OSK_ACTION=restart "$HOME/.local/bin/z13-keyboard-state"
 
 printf 'z13 touch keyboard installed\n'

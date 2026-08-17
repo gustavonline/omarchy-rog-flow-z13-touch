@@ -140,6 +140,9 @@ single keyboard process and uses `Restart=on-failure`.  Omarchy's supported
 timer, polling loop, Hyprland override or edit under `/usr/share/omarchy`.
 The state script accepts test-only environment overrides, allowing both cover
 transitions to be verified without spoofing or removing a real `/dev` device.
+The installer uses the same state script with `Z13_OSK_ACTION=restart`, so a
+detached keyboard immediately adopts a newly installed binary; ordinary cover
+events keep the non-disruptive `start` action.
 
 ## Verification gate
 

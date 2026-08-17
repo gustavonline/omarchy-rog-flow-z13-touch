@@ -25,6 +25,21 @@ Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
 expected_detached=$'--user --no-block stop omarchy-fcitx5.service\n--user --no-block start z13-osk.service'
 [[ $(<"$log") == "$expected_detached" ]]
 
+: >"$log"
+Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
+  Z13_OSK_ACTION=restart Z13_TEST_LOG="$log" \
+  "$repo/z13/runtime/z13-keyboard-state"
+
+expected_install_refresh=$'--user --no-block stop omarchy-fcitx5.service\n--user --no-block restart z13-osk.service'
+[[ $(<"$log") == "$expected_install_refresh" ]]
+
+if Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
+  Z13_OSK_ACTION=invalid Z13_TEST_LOG="$log" \
+  "$repo/z13/runtime/z13-keyboard-state" >/dev/null 2>&1; then
+  printf 'invalid Z13_OSK_ACTION unexpectedly succeeded\n' >&2
+  exit 1
+fi
+
 for mode in light dark; do
   : >"$log"
   Z13_OSK_BINARY="$repo/z13/tools/mock-osk" \
@@ -46,4 +61,4 @@ for mode in light dark; do
   fi
 done
 
-printf 'runtime contract: OK (cover transitions and Catppuccin light/dark launch)\n'
+printf 'runtime contract: OK (cover transitions, install refresh and Catppuccin light/dark launch)\n'
