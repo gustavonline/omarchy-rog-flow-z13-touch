@@ -11,36 +11,45 @@ import sys
 
 EXPECTED = {
     "Letters": [
-        [*list("1234567890"), "-", "+"],
-        ["⇥", *list("qwertyuiopå"), "⌫"],
-        ["⇧", *list("asdfghjklæø"), "↵"],
-        ["123", *list("zxcvbnm"), ",", ".", "-"],
-        ["FN", "", "━━━━", "#+=", "⌨↓"],
+        ["ESC", *list("1234567890"), "-", "+", "⌫"],
+        ["⇥", *list("qwertyuiopå"), "[", "]"],
+        ["⇪", *list("asdfghjklæø"), "↵"],
+        ["⇧", *list("zxcvbnm"), ",", ".", "-", "⇧"],
+        ["☻", "", "󰍬", "━━━━", ".?123", "#+=", "⌨↓"],
     ],
     "Numbers": [
         [*list("1234567890"), "⌫"],
-        ["-", "/", ":", ";", "(", ")", "kr", "&", "@", '"'],
-        ["#+=", ".", ",", "?", "!", "'", "⌫", "↵"],
-        ["ABC", "FN", "", "━━━━", "#+=", "⌨↓"],
+        ["-", "/", ":", ";", "(", ")", "kr", "&", "@", '"', "↵"],
+        [".", ",", "?", "!", "'", "#+="],
+        ["☻", "", "󰍬", "━━━━", "ABC", "F1–12", "⌨↓"],
     ],
     "Symbols": [
-        ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
-        ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
-        ["`", "·", "√", "π", "÷", "×", "§", "©", "®", "⌫", "↵"],
-        ["123", "ABC", "FN", "", "━━━━", "☺", "⌨↓"],
+        ["[", "]", "{", "}", "#", "%", "^", "*", "+", "=", "⌫"],
+        ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•", "↵"],
+        ["`", "½", "√", "π", "÷", "×", "§", "©", "®", ".?123"],
+        ["☻", "", "󰍬", "━━━━", "F1–12", "ABC", "⌨↓"],
     ],
     "Functions": [
-        ["ESC", *[f"F{i}" for i in range(1, 13)], "⌦"],
-        ["⇥", "⇪", "INS", "HOME", "END", "PG↑", "PG↓", "⌫", "↵", "↑"],
-        ["CTRL", "", "ALT", "ALT GR", "⇧", "←", "↓", "→"],
-        ["ABC", "123", "#+=", "━━━━", "⌨↓"],
+        ["ESC", *[f"F{i}" for i in range(1, 13)], "⌫"],
+        ["⇥", "⇪", "INS", "HOME", "END", "PG↑", "PG↓", "↑", "↵"],
+        ["⇧", "CTRL", "ALT", "ALT GR", "←", "↓", "→"],
+        ["☻", "", "󰍬", "━━━━", "ABC", ".?123", "⌨↓"],
     ],
 }
+
+EXPECTED_LETTER_WIDTHS = [
+    [0.75, *([1.0] * 12), 1.25],
+    [1.0, *([1.0] * 13)],
+    [1.5, *([1.0] * 11), 1.5],
+    [2.0, *([1.0] * 10), 2.0],
+    [1.5, 1.5, 1.5, 5.0, 1.5, 1.5, 1.5],
+]
 
 EXPECTED_GEOMETRY = {
     "height": 360,
     "landscape_height": 360,
-    "key_border": 6,
+    "grid_rows": 5,
+    "key_border": 5,
     "panel_margin_ratio": 0.008,
 }
 
@@ -58,7 +67,6 @@ EXPECTED_CODES = {
     "⌫": "KEY_BACKSPACE",
     "━━━━": "KEY_SPACE",
     "ESC": "KEY_ESC",
-    "⌦": "KEY_DELETE",
     "⇥": "KEY_TAB",
     "INS": "KEY_INSERT",
     "HOME": "KEY_HOME",
@@ -76,25 +84,32 @@ EXPECTED_MODIFIERS = {
     "⇧": "Shift",
     "⇪": "CapsLock",
     "CTRL": "Ctrl",
-    "": "Super",
+    "": "Super",
     "ALT": "Alt",
     "ALT GR": "AltGr",
 }
 
 EXPECTED_LAYOUT_TARGETS = {
-    "123": "Numbers",
+    ".?123": "Numbers",
     "ABC": "Letters",
     "#+=": "Symbols",
-    "FN": "Functions",
+    "F1–12": "Functions",
 }
 
-EXPECTED_TEXT_FLICKS = {
-    **dict(zip("qwertyuiop", ["[", "]", "{", "}", "<", ">", "\\", "|", "!", "?"])),
-    **dict(zip("asdfghjklæø", ["@", "#", "$", "&", "*", "(", ")", "'", '"', "€", "£"])),
-    "x": "~",
-    "c": "^",
-    "v": "=",
-    "b": "/",
+EXPECTED_TEXT_FLICKS = [
+    *zip("1234567890", ["!", "@", "#", "$", "%", "&", "/", "(", ")", "="]),
+    ("-", "_"),
+    ("+", "?"),
+    ("[", "{"),
+    ("]", "}"),
+    (",", ";"),
+    (".", ":"),
+    ("-", "_"),
+]
+
+EXPECTED_SHORTCUTS = {
+    "☻": ("Super|Ctrl", "KEY_E"),
+    "󰍬": ("Super|Ctrl", "KEY_X"),
 }
 
 EXPECTED_MEDIA_FLICKS = {
@@ -113,7 +128,7 @@ EXPECTED_MEDIA_FLICKS = {
 }
 
 CONTROL_LABELS = {
-    "⌫", "↵", "ESC", "⌦", "⇥", "↑", "↓", "←", "→", "INS",
+    "⌫", "↵", "ESC", "⇥", "↑", "↓", "←", "→", "INS",
     "HOME", "END", "PG↑", "PG↓", "━━━━",
 }
 
@@ -163,8 +178,11 @@ def verify_action(layer_id: str, row_index: int, key: dict) -> None:
         if label != "kr" or key.get("codes") != ["KEY_K", "KEY_R"]:
             raise SystemExit(f"{layer_id} row {row_index}: invalid kr macro")
     elif key_type == "shortcut":
-        if label != "☺" or key.get("code") != "KEY_E" or key.get("modifier") != "Super|Ctrl":
-            raise SystemExit(f"{layer_id} row {row_index}: invalid emoji shortcut")
+        actual = (key.get("modifier"), key.get("code"))
+        if EXPECTED_SHORTCUTS.get(label) != actual:
+            raise SystemExit(
+                f"{layer_id} row {row_index}: invalid shortcut {label}: {actual}"
+            )
     elif key_type != "hide":
         raise SystemExit(f"{layer_id} row {row_index} {label}: unsupported type {key_type}")
 
@@ -187,6 +205,12 @@ def main() -> None:
         raise SystemExit(
             f"geometry mismatch:\nexpected {EXPECTED_GEOMETRY}\nactual   {data.get('geometry')}"
         )
+    expected_interaction = {"shift_double_tap_caps": False}
+    if data.get("interaction") != expected_interaction:
+        raise SystemExit(
+            "interaction mismatch:\n"
+            f"expected {expected_interaction}\nactual   {data.get('interaction')}"
+        )
     layers = {layer["id"]: layer for layer in data["layers"]}
 
     if list(layers) != list(EXPECTED):
@@ -208,16 +232,176 @@ def main() -> None:
                 verify_action(layer_id, index, key)
 
     letters = layers["Letters"]["rows"]
+    if any(key.get("type") == "pad" for row in letters for key in row):
+        raise SystemExit("Letters: invisible padding is forbidden")
+    for index, (row, expected_widths) in enumerate(zip(letters, EXPECTED_LETTER_WIDTHS), 1):
+        actual_widths = [float(key.get("width", 1.0)) for key in row]
+        if actual_widths != expected_widths:
+            raise SystemExit(
+                f"Letters row {index}: width sequence mismatch:\n"
+                f"expected {expected_widths}\nactual   {actual_widths}"
+            )
+
+    if any("join" in key or "join_role" in key for row in letters for key in row):
+        raise SystemExit("Letters: joined-key rendering is forbidden")
+    if any(key.get("code") == "KEY_DELETE" for row in letters for key in row):
+        raise SystemExit("Letters: forward Delete belongs on FN, not the main view")
+
     text_flick_keys = [key for row in letters for key in row if key.get("flick")]
-    actual_text_flicks = {key["label"]: key["flick"] for key in text_flick_keys}
+    actual_text_flicks = [(key["label"], key["flick"]) for key in text_flick_keys]
     if actual_text_flicks != EXPECTED_TEXT_FLICKS:
         raise SystemExit(
-            "Letters: flick map mismatch:\n"
+            "Letters: number-row flick map mismatch:\n"
             f"expected {EXPECTED_TEXT_FLICKS}\nactual   {actual_text_flicks}"
         )
     for key in text_flick_keys:
         if key.get("flick_text") != key["flick"] or "flick_code" in key:
             raise SystemExit(f"Letters {key['label']}: flick must emit its literal label")
+
+    expected_scale_by_label = {
+        "ESC": 0.62,
+        ".?123": 0.66,
+        "ABC": 0.66,
+        "#+=": 0.66,
+        "F1–12": 0.55,
+        "☻": 1.40,
+        "INS": 0.60,
+        "HOME": 0.55,
+        "END": 0.60,
+        "PG↑": 0.60,
+        "PG↓": 0.60,
+        "CTRL": 0.55,
+        "ALT": 0.60,
+        "ALT GR": 0.50,
+    }
+    expected_bold_labels = {
+        "ESC", ".?123", "ABC", "#+=", "F1–12", "INS", "HOME", "END",
+        "PG↑", "PG↓", "CTRL", "ALT", "ALT GR",
+    }
+    for layer_id, layer in layers.items():
+        for row_index, row in enumerate(layer["rows"], 1):
+            for key in row:
+                expected_scale = expected_scale_by_label.get(key.get("label"))
+                actual_scale = key.get("label_scale")
+                if expected_scale is not None and actual_scale != expected_scale:
+                    raise SystemExit(
+                        f"{layer_id} row {row_index} {key.get('label')}: "
+                        f"expected label_scale {expected_scale}, found {actual_scale}"
+                    )
+                if expected_scale is None and actual_scale is not None:
+                    raise SystemExit(
+                        f"{layer_id} row {row_index} {key.get('label')}: "
+                        "unexpected label_scale"
+                    )
+                expected_bold = key.get("label") in expected_bold_labels
+                if bool(key.get("label_bold")) != expected_bold:
+                    raise SystemExit(
+                        f"{layer_id} row {row_index} {key.get('label')}: "
+                        f"expected label_bold {expected_bold}"
+                    )
+
+    if any(key.get("label") == "FN" for layer in layers.values()
+           for row in layer["rows"] for key in row):
+        raise SystemExit("FN label is forbidden; use the explicit F1–12 page link")
+
+    if any(key.get("code") == "KEY_DELETE" for layer in layers.values()
+           for row in layer["rows"] for key in row):
+        raise SystemExit("Forward Delete is forbidden on the touch keyboard")
+
+    bottom_labels = {
+        "Letters": ["☻", "", "󰍬", "━━━━", ".?123", "#+=", "⌨↓"],
+        "Numbers": ["☻", "", "󰍬", "━━━━", "ABC", "F1–12", "⌨↓"],
+        "Symbols": ["☻", "", "󰍬", "━━━━", "F1–12", "ABC", "⌨↓"],
+        "Functions": ["☻", "", "󰍬", "━━━━", "ABC", ".?123", "⌨↓"],
+    }
+    expected_bottom_widths = [1.5, 1.5, 1.5, 5.0, 1.5, 1.5, 1.5]
+    for layer_id, expected_labels in bottom_labels.items():
+        bottom = layers[layer_id]["rows"][-1]
+        if labels(bottom) != expected_labels:
+            raise SystemExit(
+                f"{layer_id}: fixed bottom-strip labels drifted: {labels(bottom)}"
+            )
+        widths = [float(key.get("width", 1.0)) for key in bottom]
+        if widths != expected_bottom_widths:
+            raise SystemExit(
+                f"{layer_id}: fixed bottom-strip widths drifted: {widths}"
+            )
+        omarchy_keys = [
+            key for row in layers[layer_id]["rows"] for key in row
+            if key.get("label") == ""
+        ]
+        if len(omarchy_keys) != 1 or omarchy_keys[0] is not bottom[1]:
+            raise SystemExit(
+                f"{layer_id}: Omarchy must exist once in the fixed bottom slot"
+            )
+
+    numbers_rows = layers["Numbers"]["rows"]
+    symbols_rows = layers["Symbols"]["rows"]
+    if numbers_rows[2][-1].get("label") != "#+=":
+        raise SystemExit("Numbers: Symbols route must be the rightmost content key")
+    if symbols_rows[2][-1].get("label") != ".?123":
+        raise SystemExit("Symbols: Numbers route must be the rightmost content key")
+    if labels(numbers_rows[-1])[-3:-1] != ["ABC", "F1–12"]:
+        raise SystemExit("Numbers: bottom routes must be ABC then F1–12")
+    if labels(symbols_rows[-1])[-3:-1] != ["F1–12", "ABC"]:
+        raise SystemExit("Symbols: bottom routes must be F1–12 then ABC")
+
+    for layer_id in ("Numbers", "Symbols"):
+        rows = layers[layer_id]["rows"]
+        backspaces = [key for row in rows for key in row if key.get("label") == "⌫"]
+        returns = [key for row in rows for key in row if key.get("label") == "↵"]
+        if len(backspaces) != 1 or len(returns) != 1:
+            raise SystemExit(
+                f"{layer_id}: expected exactly one Backspace and one Return"
+            )
+        if rows[0][-1].get("label") != "⌫" or rows[1][-1].get("label") != "↵":
+            raise SystemExit(
+                f"{layer_id}: Backspace/Return must form the fixed right column"
+            )
+        if any(abs(float(key.get("width", 1.0)) - 2.5) > 0.001
+               for key in (rows[0][-1], rows[1][-1])):
+            raise SystemExit(
+                f"{layer_id}: right-column Backspace/Return must both be 2.5u"
+            )
+
+    f_page_links = [
+        key for layer in layers.values() for row in layer["rows"] for key in row
+        if key.get("label") == "F1–12"
+    ]
+    if not f_page_links or any(
+        abs(float(key.get("width", 1.0)) - 1.5) > 0.001
+        for key in f_page_links
+    ):
+        raise SystemExit("F1–12 page links must match the 1.5u navigation keys")
+
+    navigation = {
+        layer_id: {
+            key["target"]
+            for row in layer["rows"]
+            for key in row
+            if key.get("type") == "layout"
+        }
+        for layer_id, layer in layers.items()
+    }
+    for source in layers:
+        distances = {source: 0}
+        queue = [source]
+        while queue:
+            current = queue.pop(0)
+            for target in navigation[current]:
+                if target not in distances:
+                    distances[target] = distances[current] + 1
+                    queue.append(target)
+        unreachable = set(layers) - set(distances)
+        too_far = {
+            target: distance for target, distance in distances.items()
+            if distance > 2
+        }
+        if unreachable or too_far:
+            raise SystemExit(
+                f"navigation from {source} is not touch-efficient: "
+                f"unreachable={sorted(unreachable)}, too_far={too_far}"
+            )
 
     function_keys = {
         key["label"]: key for key in layers["Functions"]["rows"][0]
@@ -235,6 +419,31 @@ def main() -> None:
     if any("flick_text" in key for key in function_keys.values()):
         raise SystemExit("Functions: media flicks must emit key codes, not text")
 
+    function_rows = layers["Functions"]["rows"]
+    if function_rows[0][-1].get("label") != "⌫":
+        raise SystemExit("Functions: Backspace must occupy the top-right slot")
+    if function_rows[1][-1].get("label") != "↵":
+        raise SystemExit("Functions: Return must occupy the right edge below Backspace")
+    if function_rows[2][0].get("label") != "⇧":
+        raise SystemExit("Functions: Shift must be the leftmost desktop modifier")
+    function_arrows = [
+        key for row in function_rows for key in row
+        if key.get("label") in {"↑", "←", "↓", "→"}
+    ]
+    if any(abs(float(key.get("width", 1.0)) - 0.8) > 0.001
+           for key in function_arrows):
+        raise SystemExit("Functions: compact arrow cluster must use 0.8u keys")
+    arrow_centres = {}
+    for row in function_rows:
+        offset = 0.0
+        for key in row:
+            width = float(key.get("width", 1.0))
+            if key.get("label") in {"↑", "←", "↓", "→"}:
+                arrow_centres[key["label"]] = offset + width / 2
+            offset += width
+    if abs(arrow_centres["↑"] - arrow_centres["↓"]) > 0.001:
+        raise SystemExit("Functions: Up must be centred directly above Down")
+
     letter_keys = [
         key
         for row in letters[:4]
@@ -249,7 +458,9 @@ def main() -> None:
 
     print(
         "layout contract: OK (4 layers, 17 rows, width 14, equal character keys, "
-        "25 text flicks, 12 ROG media flicks, compact physical arrow cluster)"
+        "17 literal flicks, balanced bold control labels, dual Shift, "
+        "fixed seven-slot bottom strip, single right edit stack, two-tap "
+        "navigation graph, 12 ROG media flicks, compact arrow cluster)"
     )
 
 

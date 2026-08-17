@@ -4,8 +4,12 @@
   "geometry": {
     "height": 360,
     "landscape_height": 360,
-    "key_border": 6,
+    "grid_rows": 5,
+    "key_border": 5,
     "panel_margin_ratio": 0.008
+  },
+  "interaction": {
+    "shift_double_tap_caps": false
   },
   "layers": [
     {
@@ -14,71 +18,73 @@
       "alphabetic": true,
       "rows": [
         [
-          {"type":"pad","width":1.0},
-          {"label":"1","shift":"!","code":"KEY_1"},
-          {"label":"2","shift":"\"","code":"KEY_2"},
-          {"label":"3","shift":"#","code":"KEY_3"},
-          {"label":"4","shift":"¤","code":"KEY_4"},
-          {"label":"5","shift":"%","code":"KEY_5"},
-          {"label":"6","shift":"&","code":"KEY_6"},
-          {"label":"7","shift":"/","code":"KEY_7"},
-          {"label":"8","shift":"(","code":"KEY_8"},
-          {"label":"9","shift":")","code":"KEY_9"},
-          {"label":"0","shift":"=","code":"KEY_0"},
-          {"label":"-","shift":"_","code":"KEY_SLASH"},
-          {"label":"+","shift":"?","code":"KEY_MINUS"},
-          {"type":"pad","width":1.0}
+          {"label":"ESC","code":"KEY_ESC","style":"special","width":0.75,"label_scale":0.62,"label_bold":true},
+          {"label":"1","shift":"!","flick":"!","code":"KEY_1","flick_text":"!"},
+          {"label":"2","shift":"\"","flick":"@","code":"KEY_2","flick_text":"@"},
+          {"label":"3","shift":"#","flick":"#","code":"KEY_3","flick_text":"#"},
+          {"label":"4","shift":"¤","flick":"$","code":"KEY_4","flick_text":"$"},
+          {"label":"5","shift":"%","flick":"%","code":"KEY_5","flick_text":"%"},
+          {"label":"6","shift":"&","flick":"&","code":"KEY_6","flick_text":"&"},
+          {"label":"7","shift":"/","flick":"/","code":"KEY_7","flick_text":"/"},
+          {"label":"8","shift":"(","flick":"(","code":"KEY_8","flick_text":"("},
+          {"label":"9","shift":")","flick":")","code":"KEY_9","flick_text":")"},
+          {"label":"0","shift":"=","flick":"=","code":"KEY_0","flick_text":"="},
+          {"label":"-","shift":"_","flick":"_","code":"KEY_SLASH","flick_text":"_"},
+          {"label":"+","shift":"?","flick":"?","code":"KEY_MINUS","flick_text":"?"},
+          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":1.25}
         ],
         [
-          {"label":"⇥","code":"KEY_TAB","style":"special","width":1.5},
-          {"label":"q","shift":"Q","flick":"[","code":"KEY_Q","flick_text":"["},
-          {"label":"w","shift":"W","flick":"]","code":"KEY_W","flick_text":"]"},
-          {"label":"e","shift":"E","flick":"{","code":"KEY_E","flick_text":"{"},
-          {"label":"r","shift":"R","flick":"}","code":"KEY_R","flick_text":"}"},
-          {"label":"t","shift":"T","flick":"<","code":"KEY_T","flick_text":"<"},
-          {"label":"y","shift":"Y","flick":">","code":"KEY_Y","flick_text":">"},
-          {"label":"u","shift":"U","flick":"\\","code":"KEY_U","flick_text":"\\"},
-          {"label":"i","shift":"I","flick":"|","code":"KEY_I","flick_text":"|"},
-          {"label":"o","shift":"O","flick":"!","code":"KEY_O","flick_text":"!"},
-          {"label":"p","shift":"P","flick":"?","code":"KEY_P","flick_text":"?"},
+          {"label":"⇥","code":"KEY_TAB","style":"special","width":1.0},
+          {"label":"q","shift":"Q","code":"KEY_Q"},
+          {"label":"w","shift":"W","code":"KEY_W"},
+          {"label":"e","shift":"E","code":"KEY_E"},
+          {"label":"r","shift":"R","code":"KEY_R"},
+          {"label":"t","shift":"T","code":"KEY_T"},
+          {"label":"y","shift":"Y","code":"KEY_Y"},
+          {"label":"u","shift":"U","code":"KEY_U"},
+          {"label":"i","shift":"I","code":"KEY_I"},
+          {"label":"o","shift":"O","code":"KEY_O"},
+          {"label":"p","shift":"P","code":"KEY_P"},
           {"label":"å","shift":"Å","code":"KEY_LEFTBRACE"},
-          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":1.5}
+          {"label":"[","type":"copy","text":"[","flick":"{","flick_text":"{"},
+          {"label":"]","type":"copy","text":"]","flick":"}","flick_text":"}"}
         ],
         [
-          {"label":"⇧","shift":"⇪","type":"modifier","modifier":"Shift","style":"special","width":1.5},
-          {"label":"a","shift":"A","flick":"@","code":"KEY_A","flick_text":"@"},
-          {"label":"s","shift":"S","flick":"#","code":"KEY_S","flick_text":"#"},
-          {"label":"d","shift":"D","flick":"$","code":"KEY_D","flick_text":"$"},
-          {"label":"f","shift":"F","flick":"&","code":"KEY_F","flick_text":"&"},
-          {"label":"g","shift":"G","flick":"*","code":"KEY_G","flick_text":"*"},
-          {"label":"h","shift":"H","flick":"(","code":"KEY_H","flick_text":"("},
-          {"label":"j","shift":"J","flick":")","code":"KEY_J","flick_text":")"},
-          {"label":"k","shift":"K","flick":"'","code":"KEY_K","flick_text":"'"},
-          {"label":"l","shift":"L","flick":"\"","code":"KEY_L","flick_text":"\""},
-          {"label":"æ","shift":"Æ","flick":"€","code":"KEY_SEMICOLON","flick_text":"€"},
-          {"label":"ø","shift":"Ø","flick":"£","code":"KEY_APOSTROPHE","flick_text":"£"},
+          {"label":"⇪","type":"modifier","modifier":"CapsLock","style":"special","width":1.5},
+          {"label":"a","shift":"A","code":"KEY_A"},
+          {"label":"s","shift":"S","code":"KEY_S"},
+          {"label":"d","shift":"D","code":"KEY_D"},
+          {"label":"f","shift":"F","code":"KEY_F"},
+          {"label":"g","shift":"G","code":"KEY_G"},
+          {"label":"h","shift":"H","code":"KEY_H"},
+          {"label":"j","shift":"J","code":"KEY_J"},
+          {"label":"k","shift":"K","code":"KEY_K"},
+          {"label":"l","shift":"L","code":"KEY_L"},
+          {"label":"æ","shift":"Æ","code":"KEY_SEMICOLON"},
+          {"label":"ø","shift":"Ø","code":"KEY_APOSTROPHE"},
           {"label":"↵","code":"KEY_ENTER","style":"special","width":1.5}
         ],
         [
-          {"type":"pad","width":1.0},
-          {"label":"123","type":"layout","target":"Numbers","style":"special","width":2.0},
+          {"label":"⇧","shift":"⇪","type":"modifier","modifier":"Shift","style":"special","width":2.0},
           {"label":"z","shift":"Z","code":"KEY_Z"},
-          {"label":"x","shift":"X","flick":"~","code":"KEY_X","flick_text":"~"},
-          {"label":"c","shift":"C","flick":"^","code":"KEY_C","flick_text":"^"},
-          {"label":"v","shift":"V","flick":"=","code":"KEY_V","flick_text":"="},
-          {"label":"b","shift":"B","flick":"/","code":"KEY_B","flick_text":"/"},
+          {"label":"x","shift":"X","code":"KEY_X"},
+          {"label":"c","shift":"C","code":"KEY_C"},
+          {"label":"v","shift":"V","code":"KEY_V"},
+          {"label":"b","shift":"B","code":"KEY_B"},
           {"label":"n","shift":"N","code":"KEY_N"},
           {"label":"m","shift":"M","code":"KEY_M"},
-          {"label":",","shift":";","code":"KEY_COMMA"},
-          {"label":".","shift":":","code":"KEY_DOT"},
-          {"label":"-","shift":"_","code":"KEY_SLASH"},
-          {"type":"pad","width":1.0}
+          {"label":",","shift":";","flick":";","code":"KEY_COMMA","flick_text":";"},
+          {"label":".","shift":":","flick":":","code":"KEY_DOT","flick_text":":"},
+          {"label":"-","shift":"_","flick":"_","code":"KEY_SLASH","flick_text":"_"},
+          {"label":"⇧","shift":"⇪","type":"modifier","modifier":"Shift","style":"special","width":2.0}
         ],
         [
-          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.5},
-          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.5},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":8.0},
-          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5},
+          {"label":"☻","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_E","style":"special","width":1.5,"label_scale":1.40},
+          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.5},
+          {"label":"󰍬","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_X","style":"special","width":1.5},
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":5.0},
+          {"label":".?123","type":"layout","target":"Numbers","style":"special","width":1.5,"label_scale":0.66,"label_bold":true},
+          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5,"label_scale":0.66,"label_bold":true},
           {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]
@@ -89,33 +95,31 @@
       "alphabetic": false,
       "rows": [
         [
-          {"type":"pad"},
+          {"type":"pad","width":1.5},
           {"label":"1","code":"KEY_1"},{"label":"2","code":"KEY_2"},{"label":"3","code":"KEY_3"},{"label":"4","code":"KEY_4"},{"label":"5","code":"KEY_5"},
           {"label":"6","code":"KEY_6"},{"label":"7","code":"KEY_7"},{"label":"8","code":"KEY_8"},{"label":"9","code":"KEY_9"},{"label":"0","code":"KEY_0"},
-          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":2.0},
-          {"type":"pad"}
-        ],
-        [
-          {"type":"pad","width":2.0},
-          {"label":"-","type":"copy","text":"-"},{"label":"/","type":"copy","text":"/"},{"label":":","type":"copy","text":":"},{"label":";","type":"copy","text":";"},
-          {"label":"(","type":"copy","text":"("},{"label":")","type":"copy","text":")"},{"label":"kr","type":"macro","codes":["KEY_K","KEY_R"]},
-          {"label":"&","type":"copy","text":"&"},{"label":"@","type":"copy","text":"@"},{"label":"\"","type":"copy","text":"\""},
-          {"type":"pad","width":2.0}
+          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":2.5}
         ],
         [
           {"type":"pad","width":1.5},
-          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":2.0},
-          {"label":".","type":"copy","text":"."},{"label":",","type":"copy","text":","},{"label":"?","type":"copy","text":"?"},{"label":"!","type":"copy","text":"!"},{"label":"'","type":"copy","text":"'"},
-          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":2.0},
-          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":2.0},
-          {"type":"pad","width":1.5}
+          {"label":"-","type":"copy","text":"-"},{"label":"/","type":"copy","text":"/"},{"label":":","type":"copy","text":":"},{"label":";","type":"copy","text":";"},
+          {"label":"(","type":"copy","text":"("},{"label":")","type":"copy","text":")"},{"label":"kr","type":"macro","codes":["KEY_K","KEY_R"]},
+          {"label":"&","type":"copy","text":"&"},{"label":"@","type":"copy","text":"@"},{"label":"\"","type":"copy","text":"\""},
+          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":2.5}
         ],
         [
-          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
-          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.25},
-          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.25},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":7.0},
-          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5},
+          {"type":"pad","width":3.75},
+          {"label":".","type":"copy","text":"."},{"label":",","type":"copy","text":","},{"label":"?","type":"copy","text":"?"},{"label":"!","type":"copy","text":"!"},{"label":"'","type":"copy","text":"'"},
+          {"type":"pad","width":3.75},
+          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5,"label_scale":0.66,"label_bold":true}
+        ],
+        [
+          {"label":"☻","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_E","style":"special","width":1.5,"label_scale":1.40},
+          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.5},
+          {"label":"󰍬","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_X","style":"special","width":1.5},
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":5.0},
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5,"label_scale":0.66,"label_bold":true},
+          {"label":"F1–12","type":"layout","target":"Functions","style":"special","width":1.5,"label_scale":0.55,"label_bold":true},
           {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]
@@ -126,34 +130,34 @@
       "alphabetic": false,
       "rows": [
         [
-          {"type":"pad","width":2.0},
+          {"type":"pad","width":1.5},
           {"label":"[","type":"copy","text":"["},{"label":"]","type":"copy","text":"]"},{"label":"{","type":"copy","text":"{"},{"label":"}","type":"copy","text":"}"},
           {"label":"#","type":"copy","text":"#"},{"label":"%","type":"copy","text":"%"},{"label":"^","type":"copy","text":"^"},{"label":"*","type":"copy","text":"*"},
           {"label":"+","type":"copy","text":"+"},{"label":"=","type":"copy","text":"="},
-          {"type":"pad","width":2.0}
+          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":2.5}
         ],
         [
-          {"type":"pad","width":2.0},
+          {"type":"pad","width":1.5},
           {"label":"_","type":"copy","text":"_"},{"label":"\\","type":"copy","text":"\\"},{"label":"|","type":"copy","text":"|"},{"label":"~","type":"copy","text":"~"},
           {"label":"<","type":"copy","text":"<"},{"label":">","type":"copy","text":">"},{"label":"€","type":"copy","text":"€"},{"label":"£","type":"copy","text":"£"},
           {"label":"¥","type":"copy","text":"¥"},{"label":"•","type":"copy","text":"•"},
-          {"type":"pad","width":2.0}
+          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":2.5}
         ],
         [
-          {"type":"pad"},
-          {"label":"`","type":"copy","text":"`"},{"label":"·","type":"copy","text":"·"},{"label":"√","type":"copy","text":"√"},
+          {"type":"pad","width":2.5},
+          {"label":"`","type":"copy","text":"`"},{"label":"½","type":"copy","text":"½"},{"label":"√","type":"copy","text":"√"},
           {"label":"π","type":"copy","text":"π"},{"label":"÷","type":"copy","text":"÷"},{"label":"×","type":"copy","text":"×"},
           {"label":"§","type":"copy","text":"§"},{"label":"©","type":"copy","text":"©"},{"label":"®","type":"copy","text":"®"},
-          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":2.0},
-          {"label":"↵","type":"code","code":"KEY_ENTER","style":"special","width":2.0}
+          {"type":"pad"},
+          {"label":".?123","type":"layout","target":"Numbers","style":"special","width":1.5,"label_scale":0.66,"label_bold":true}
         ],
         [
-          {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
-          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
-          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.25},
-          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.25},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":5.5},
-          {"label":"☺","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_E","style":"special","width":1.5},
+          {"label":"☻","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_E","style":"special","width":1.5,"label_scale":1.40},
+          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.5},
+          {"label":"󰍬","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_X","style":"special","width":1.5},
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":5.0},
+          {"label":"F1–12","type":"layout","target":"Functions","style":"special","width":1.5,"label_scale":0.55,"label_bold":true},
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5,"label_scale":0.66,"label_bold":true},
           {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]
@@ -164,7 +168,7 @@
       "alphabetic": false,
       "rows": [
         [
-          {"label":"ESC","code":"KEY_ESC","style":"special"},
+          {"label":"ESC","code":"KEY_ESC","style":"special","label_scale":0.62,"label_bold":true},
           {"label":"F1","flick":"󰝟","code":"KEY_F1","flick_code":"KEY_MUTE"},
           {"label":"F2","flick":"󰕿","code":"KEY_F2","flick_code":"KEY_VOLUMEDOWN"},
           {"label":"F3","flick":"󰖀","code":"KEY_F3","flick_code":"KEY_VOLUMEUP"},
@@ -177,38 +181,39 @@
           {"label":"F10","flick":"󰟸","code":"KEY_F10","flick_code":"KEY_F21"},
           {"label":"F11","flick":"󰌌","code":"KEY_F11","flick_code":"KEY_KBDILLUMDOWN"},
           {"label":"F12","flick":"󰀝","code":"KEY_F12","flick_code":"KEY_RFKILL"},
-          {"label":"⌦","code":"KEY_DELETE","style":"special"}
+          {"label":"⌫","code":"KEY_BACKSPACE","style":"special"}
         ],
         [
           {"label":"⇥","code":"KEY_TAB","style":"special","width":1.2},
           {"label":"⇪","type":"modifier","modifier":"CapsLock","style":"special","width":1.2},
-          {"label":"INS","code":"KEY_INSERT","style":"special"},
-          {"label":"HOME","code":"KEY_HOME","style":"special"},
-          {"label":"END","code":"KEY_END","style":"special"},
-          {"label":"PG↑","code":"KEY_PAGEUP","style":"special"},
-          {"label":"PG↓","code":"KEY_PAGEDOWN","style":"special"},
-          {"label":"⌫","code":"KEY_BACKSPACE","style":"special","width":1.5},
-          {"label":"↵","code":"KEY_ENTER","style":"special","width":1.5},
-          {"type":"pad","width":1.6},
-          {"label":"↑","code":"KEY_UP","style":"special"},
-          {"type":"pad"}
+          {"label":"INS","code":"KEY_INSERT","style":"special","label_scale":0.60,"label_bold":true},
+          {"label":"HOME","code":"KEY_HOME","style":"special","label_scale":0.55,"label_bold":true},
+          {"label":"END","code":"KEY_END","style":"special","label_scale":0.60,"label_bold":true},
+          {"label":"PG↑","code":"KEY_PAGEUP","style":"special","label_scale":0.60,"label_bold":true},
+          {"label":"PG↓","code":"KEY_PAGEDOWN","style":"special","label_scale":0.60,"label_bold":true},
+          {"type":"pad","width":3.6},
+          {"label":"↑","code":"KEY_UP","style":"special","width":0.8},
+          {"type":"pad","width":0.2},
+          {"label":"↵","code":"KEY_ENTER","style":"special","width":2.0}
         ],
         [
-          {"label":"CTRL","type":"modifier","modifier":"Ctrl","style":"special","width":1.2},
-          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.2},
-          {"label":"ALT","type":"modifier","modifier":"Alt","style":"special","width":1.2},
-          {"label":"ALT GR","type":"modifier","modifier":"AltGr","style":"special","width":1.2},
           {"label":"⇧","type":"modifier","modifier":"Shift","style":"special","width":1.2},
-          {"type":"pad","width":5.0},
-          {"label":"←","code":"KEY_LEFT","style":"special"},
-          {"label":"↓","code":"KEY_DOWN","style":"special"},
-          {"label":"→","code":"KEY_RIGHT","style":"special"}
+          {"label":"CTRL","type":"modifier","modifier":"Ctrl","style":"special","width":1.2,"label_scale":0.55,"label_bold":true},
+          {"label":"ALT","type":"modifier","modifier":"Alt","style":"special","width":1.2,"label_scale":0.60,"label_bold":true},
+          {"label":"ALT GR","type":"modifier","modifier":"AltGr","style":"special","width":1.2,"label_scale":0.50,"label_bold":true},
+          {"type":"pad","width":5.4},
+          {"label":"←","code":"KEY_LEFT","style":"special","width":0.8},
+          {"label":"↓","code":"KEY_DOWN","style":"special","width":0.8},
+          {"label":"→","code":"KEY_RIGHT","style":"special","width":0.8},
+          {"type":"pad","width":1.4}
         ],
         [
-          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
-          {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
-          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":8.0},
+          {"label":"☻","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_E","style":"special","width":1.5,"label_scale":1.40},
+          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.5},
+          {"label":"󰍬","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_X","style":"special","width":1.5},
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":5.0},
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5,"label_scale":0.66,"label_bold":true},
+          {"label":".?123","type":"layout","target":"Numbers","style":"special","width":1.5,"label_scale":0.66,"label_bold":true},
           {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]

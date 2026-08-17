@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.gustavonline.z13-touch-active-window",
+  "name": "Z13 Touch Window Controls",
+  "version": "0.1.0",
+  "author": "Gustav Andersen",
+  "description": "Active window title with a touch-friendly close button",
+  "kinds": ["bar-widget"],
+  "entryPoints": {"barWidget": "ActiveWindow.qml"},
+  "barWidget": {
+    "displayName": "Z13 Touch Window Controls",
+    "description": "Active window title and touch close button",
+    "category": "Compositor",
+    "allowMultiple": false,
+    "defaultSection": "left"
+  }
+}

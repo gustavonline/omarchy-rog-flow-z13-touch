@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.gustavonline.z13-touch-indicators",
+  "name": "Z13 Touch Indicators",
+  "version": "0.1.0",
+  "author": "Gustav Andersen",
+  "description": "Omarchy indicators with a persistent one-tap reveal toggle",
+  "kinds": ["bar-widget"],
+  "entryPoints": {"barWidget": "Indicators.qml"},
+  "barWidget": {
+    "displayName": "Z13 Touch Indicators",
+    "description": "State indicators with a touch reveal toggle",
+    "category": "Status",
+    "allowMultiple": false,
+    "defaultSection": "center",
+    "schema": [
+      {
+        "key": "alwaysShow",
+        "type": "boolean",
+        "label": "Always Show",
+        "description": "Show inactive indicators without using the toggle.",
+        "defaultValue": false
+      }
+    ]
+  }
+}

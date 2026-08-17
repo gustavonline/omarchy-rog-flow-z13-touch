@@ -45,25 +45,32 @@ if Z13_COVER_DEVICE="$cover" Z13_SYSTEMCTL="$repo/z13/tools/mock-systemctl" \
   exit 1
 fi
 
-for mode in light dark; do
-  : >"$log"
-  Z13_OSK_BINARY="$repo/z13/tools/mock-osk" \
-    Z13_OSK_THEME_FILE="$repo/z13/theme.env" \
-    Z13_OSK_MODE="$mode" Z13_TEST_LOG="$log" \
-    "$repo/z13/runtime/z13-osk"
+theme_dir="$test_dir/theme"
+mkdir -p "$theme_dir"
+cat >"$theme_dir/colors.toml" <<'EOF'
+background = "#102030"
+lighter_background = "#203040"
+selection = "#304050"
+muted = "#405060"
+accent = "#506070"
+foreground = "#607080"
+EOF
 
-  args=$(<"$log")
-  [[ "$args" == *"--auto --hidden --no-popup"* ]]
-  [[ "$args" == *"--fn Inter 19 --alpha 255 -R 10"* ]]
-  if [[ "$mode" == light ]]; then
-    [[ "$args" == *"--bg eff1f5 --fg ccd0da --fg-sp bcc0cc"* ]]
-    [[ "$args" == *"--swipe 1e66f5 --swipe-sp 1e66f5"* ]]
-    [[ "$args" == *"--text 4c4f69 --text-sp 4c4f69"* ]]
-  else
-    [[ "$args" == *"--bg 24273a --fg 363a4f --fg-sp 494d64"* ]]
-    [[ "$args" == *"--swipe 8aadf4 --swipe-sp 8aadf4"* ]]
-    [[ "$args" == *"--text cad3f5 --text-sp cad3f5"* ]]
-  fi
-done
+palette=$(Z13_OSK_THEME_DIR="$theme_dir" "$repo/z13/runtime/z13-theme")
+[[ "$palette" == $'102030\n203040\n304050\n405060\n506070\n607080' ]]
 
-printf 'runtime contract: OK (visibility policy, cover transitions, install refresh and Catppuccin light/dark launch)\n'
+: >"$log"
+Z13_OSK_BINARY="$repo/z13/tools/mock-osk" \
+  Z13_OSK_THEME_HELPER="$repo/z13/runtime/z13-theme" \
+  Z13_OSK_THEME_DIR="$theme_dir" Z13_TEST_LOG="$log" \
+  "$repo/z13/runtime/z13-osk"
+
+args=$(<"$log")
+[[ "$args" == *"--auto --hidden --no-popup"* ]]
+[[ "$args" == *"--fn Inter 19 --alpha 255 -R 10"* ]]
+[[ "$args" == *"--bg 102030 --fg 203040 --fg-sp 304050"* ]]
+[[ "$args" == *"--press 405060 --press-sp 405060"* ]]
+[[ "$args" == *"--swipe 506070 --swipe-sp 506070"* ]]
+[[ "$args" == *"--text 607080 --text-sp 607080"* ]]
+
+printf 'runtime contract: OK (visibility policy, cover transitions, install refresh and Omarchy theme launch)\n'

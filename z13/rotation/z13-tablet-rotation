@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+
+set -u
+
+readonly cover_device="asustek-computer-inc.-gz302ea-keyboard"
+readonly output="eDP-1"
+readonly touch_device="elan9008:00-04f3:43c7"
+readonly stylus_device="elan9008:00-04f3:43c7-stylus"
+readonly shell_config="$HOME/.config/omarchy/shell.json"
+
+orientation="normal"
+applied_transform=""
+sensor_pid=""
+
+cover_is_attached() {
+  hyprctl devices -j 2>/dev/null |
+    jq -e --arg device "$cover_device" 'any(.keyboards[]?; .name == $device)' >/dev/null
+}
+
+ensure_bar_top() {
+  local position
+
+  position=$(jq -r '.bar.position // empty' "$shell_config" 2>/dev/null || true)
+  if [[ -n "$position" && "$position" != "top" ]]; then
+    omarchy bar position top >/dev/null
+    printf 'restored Omarchy bar to the logical top edge\n'
+  fi
+}
+
+orientation_transform() {
+  case "$1" in
+    normal) printf '0' ;;
+    right-up) printf '1' ;;
+    bottom-up) printf '2' ;;
+    left-up) printf '3' ;;
+    *) printf '0' ;;
+  esac
+}
+
+apply_transform() {
+  local transform="$1"
+  local current_transform
+
+  current_transform=$(hyprctl monitors -j 2>/dev/null |
+    jq -r --arg output "$output" '.[] | select(.name == $output) | .transform' |
+    head -n 1)
+
+  [[ "$transform" == "$applied_transform" && "$transform" == "$current_transform" ]] && return
+
+  hyprctl eval "hl.monitor({ output = \"$output\", mode = \"preferred\", position = \"0x0\", scale = 1.6, transform = $transform })" >/dev/null
+  hyprctl eval "hl.device({ name = \"$touch_device\", transform = $transform, output = \"$output\" })" >/dev/null
+  hyprctl eval "hl.device({ name = \"$stylus_device\", transform = $transform, output = \"$output\" })" >/dev/null
+
+  applied_transform="$transform"
+  printf 'display rotation set to transform %s (%s)\n' "$transform" "$orientation"
+}
+
+cleanup() {
+  if [[ -n "$sensor_pid" ]]; then
+    kill "$sensor_pid" 2>/dev/null || true
+    wait "$sensor_pid" 2>/dev/null || true
+  fi
+}
+
+shutdown() {
+  trap - EXIT INT TERM
+  cleanup
+  exit 0
+}
+
+trap cleanup EXIT
+trap shutdown INT TERM
+
+coproc SENSOR_READER { exec stdbuf -oL monitor-sensor --accel 2>&1; }
+sensor_pid="$SENSOR_READER_PID"
+sensor_fd="${SENSOR_READER[0]}"
+
+while true; do
+  if IFS= read -r -t 1 line <&"$sensor_fd"; then
+    if [[ "$line" =~ Accelerometer\ orientation\ changed:\ ([a-z-]+) ]]; then
+      orientation="${BASH_REMATCH[1]}"
+    fi
+  elif ! kill -0 "$sensor_pid" 2>/dev/null; then
+    printf 'accelerometer reader stopped unexpectedly\n' >&2
+    exit 1
+  fi
+
+  ensure_bar_top
+
+  if cover_is_attached; then
+    # Laptop mode is always landscape, regardless of accidental movement.
+    apply_transform 0
+  else
+    # Automatic rotation is enabled only when the keyboard cover is detached.
+    apply_transform "$(orientation_transform "$orientation")"
+  fi
+done

@@ -222,8 +222,16 @@ kbd_init_layout(struct layout *l, uint32_t width, uint32_t height)
 #endif
     const uint32_t row_origin_x = x;
     uint8_t rows = kbd_get_rows(l);
+#ifdef KBD_GRID_ROWS
+    uint8_t grid_rows = rows < KBD_GRID_ROWS ? KBD_GRID_ROWS : rows;
+#else
+    uint8_t grid_rows = rows;
+#endif
 
-    l->keyheight = layout_height / rows;
+    l->keyheight = layout_height / grid_rows;
+    /* Preserve a common bottom edge and key height when a secondary layout
+     * intentionally contains fewer rows than the main keyboard. */
+    y += (grid_rows - rows) * l->keyheight;
 
     struct key *k = l->keys;
     double rowlength = kbd_get_row_length(k);
@@ -510,7 +518,8 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
             kbd_toggle_capslock(kb, time);
             break;
         }
-        if (k->code == Shift && time && kb->last_shift_tap &&
+        if (k->code == Shift && !kb->layout->disable_shift_double_tap_caps &&
+            time && kb->last_shift_tap &&
             time - kb->last_shift_tap <= 350) {
             if (kb->mods & Shift) {
                 kb->mods ^= Shift;
@@ -520,7 +529,7 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
             kbd_toggle_capslock(kb, time);
             break;
         }
-        if (k->code == Shift)
+        if (k->code == Shift && !kb->layout->disable_shift_double_tap_caps)
             kb->last_shift_tap = time;
         kb->mods ^= k->code;
         if (kb->mods & k->code) {
@@ -770,6 +779,20 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
         fprintf(stderr, "Draw key +%d+%d %dx%d -> %s\n", k->x, k->y, k->w, k->h,
                 label);
     struct clr_scheme *scheme = &kb->schemes[k->scheme];
+    PangoFontDescription *scaled_label_font = NULL;
+    PangoFontDescription *label_font = scheme->font_description;
+    if ((k->label_scale > 0.0 && k->label_scale != 1.0) || k->label_bold) {
+        scaled_label_font = pango_font_description_copy(scheme->font_description);
+        if (k->label_scale > 0.0 && k->label_scale != 1.0) {
+            int font_size = pango_font_description_get_size(scaled_label_font);
+            pango_font_description_set_size(
+                scaled_label_font, (int)((double)font_size * k->label_scale));
+        }
+        if (k->label_bold)
+            pango_font_description_set_weight(scaled_label_font,
+                                              PANGO_WEIGHT_BOLD);
+        label_font = scaled_label_font;
+    }
 
     switch (type) {
     case None:
@@ -777,7 +800,7 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
         draw_inset(kb->surf, k->x, k->y, k->w, k->h, KBD_KEY_BORDER,
                    scheme->fg, scheme->rounding);
         drw_draw_text(kb->surf, scheme->text, k->x, k->y, k->w, k->h,
-                  KBD_KEY_BORDER, label, scheme->font_description);
+                  KBD_KEY_BORDER, label, label_font);
         break;
     case Press:
         draw_inset(kb->surf, k->x, k->y, k->w, k->h, KBD_KEY_BORDER,
@@ -786,17 +809,17 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
         drw_draw_text(kb->surf,
                   kb->show_highlight ? scheme->text_press : scheme->text,
                   k->x, k->y, k->w, k->h, KBD_KEY_BORDER, label,
-                  scheme->font_description);
+                  label_font);
         break;
     case Swipe:
         draw_over_inset(kb->surf, k->x, k->y, k->w, k->h, KBD_KEY_BORDER,
                         scheme->swipe, scheme->rounding);
         drw_draw_text(kb->surf, scheme->text_swipe, k->x, k->y, k->w, k->h,
-                  KBD_KEY_BORDER, label, scheme->font_description);
+                  KBD_KEY_BORDER, label, label_font);
         break;
     default:
         drw_draw_text(kb->surf, scheme->text, k->x, k->y, k->w, k->h,
-                  KBD_KEY_BORDER, label, scheme->font_description);
+                  KBD_KEY_BORDER, label, label_font);
     }
 
     if (k->flick_label && k->flick_label[0] && type != Swipe) {
@@ -830,8 +853,10 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
         drw_draw_text(kb->popup_surf,
                       kb->show_highlight ? scheme->text_press : scheme->text,
                       k->x, kb->last_popup_y, k->w, k->h, KBD_KEY_BORDER, label,
-                      scheme->font_description);
+                      label_font);
     }
+    if (scaled_label_font)
+        pango_font_description_free(scaled_label_font);
 }
 
 void

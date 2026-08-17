@@ -319,6 +319,12 @@ void
 wl_preferred_buffer_scale(void *data, struct wl_surface *wl_surface,
                           int scale) {
     keyboard.preferred_scale = scale;
+    if (!(wfs_mgr && viewporter) && forced_scale <= 0 &&
+        layer_surface_configured && keyboard.scale != scale) {
+        fprintf(stderr, "Applying late output scale %d\n", scale);
+        hide();
+        show();
+    }
 }
 
 void
@@ -733,7 +739,19 @@ wp_fractional_scale_preferred_scale(
     void *data, struct wp_fractional_scale_v1 *wp_fractional_scale_v1,
     uint32_t scale)
 {
-    keyboard.preferred_fractional_scale = (double)scale / 120;
+    double preferred_scale = (double)scale / 120;
+    keyboard.preferred_fractional_scale = preferred_scale;
+    if (forced_scale <= 0 && layer_surface_configured &&
+        keyboard.scale != preferred_scale) {
+        /* Hyprland can configure a newly shown layer before sending the
+         * fractional-scale event.  Recreate it once at the real scale instead
+         * of leaving the first visible keyboard as a compositor-upscaled 1x
+         * buffer until the next hide/show cycle. */
+        fprintf(stderr, "Applying late fractional scale %.3f\n",
+                preferred_scale);
+        hide();
+        show();
+    }
 }
 
 static const struct wp_fractional_scale_v1_listener

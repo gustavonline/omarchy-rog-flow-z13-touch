@@ -87,6 +87,8 @@ struct key {
 	const uint32_t flick_codepoint;
 	const uint32_t *macro_codes;
 	const uint8_t macro_len;
+	const double label_scale; // optional per-key primary-label scale; 0 means 1.0
+	const bool label_bold;    // emphasize control/navigation labels only
 
 	// actual coordinates on the surface (pixels), will be computed automatically
 	// for all keys
@@ -99,6 +101,8 @@ struct layout {
 	const char *name;
 	bool abc; //is this an alphabetical/abjad layout or not? (i.e. something that is a primary input layout)
 	uint32_t keyheight; // absolute height (pixels)
+	/* Z13 policy extension; appended so upstream positional layouts retain ABI. */
+	bool disable_shift_double_tap_caps;
 };
 
 struct kbd {

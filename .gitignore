@@ -9,3 +9,4 @@ include/config.h
 build-*/*
 wvkbd-*
 /layout.z13.h
+__pycache__/

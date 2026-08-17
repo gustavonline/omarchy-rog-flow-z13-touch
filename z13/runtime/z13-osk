@@ -3,37 +3,24 @@
 set -euo pipefail
 
 readonly binary="${Z13_OSK_BINARY:-$HOME/.local/libexec/z13-osk/wvkbd-z13}"
-readonly theme_file="${Z13_OSK_THEME_FILE:-$HOME/.config/omarchy/z13-keyboard/theme.env}"
-readonly mode_file="${Z13_OSK_MODE_FILE:-$HOME/.local/state/omarchy/current/appearance-mode}"
+readonly theme_helper="${Z13_OSK_THEME_HELPER:-$HOME/.local/bin/z13-theme}"
 
 if [[ ! -x "$binary" ]]; then
   printf 'z13-osk: missing executable: %s\n' "$binary" >&2
   exit 1
 fi
-if [[ ! -r "$theme_file" ]]; then
-  printf 'z13-osk: missing theme: %s\n' "$theme_file" >&2
+if [[ ! -x "$theme_helper" ]]; then
+  printf 'z13-osk: missing theme helper: %s\n' "$theme_helper" >&2
   exit 1
 fi
 
-# shellcheck disable=SC1090
-source "$theme_file"
-
-mode=${Z13_OSK_MODE:-}
-if [[ "$mode" != "light" && "$mode" != "dark" ]]; then
-  mode=$(<"$mode_file" 2>/dev/null || true)
+mapfile -t palette < <("$theme_helper")
+if (( ${#palette[@]} != 6 )); then
+  printf 'z13-osk: theme helper returned an invalid palette\n' >&2
+  exit 1
 fi
-if [[ "$mode" != "light" && "$mode" != "dark" ]]; then
-  current_theme=$(omarchy theme current 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
-  [[ "$current_theme" == *latte* ]] && mode=light || mode=dark
-fi
-
-if [[ "$mode" == "light" ]]; then
-  bg=$LIGHT_BG key=$LIGHT_KEY special=$LIGHT_SPECIAL press=$LIGHT_PRESS
-  accent=$LIGHT_ACCENT text=$LIGHT_TEXT
-else
-  bg=$DARK_BG key=$DARK_KEY special=$DARK_SPECIAL press=$DARK_PRESS
-  accent=$DARK_ACCENT text=$DARK_TEXT
-fi
+bg=${palette[0]} key=${palette[1]} special=${palette[2]}
+press=${palette[3]} accent=${palette[4]} text=${palette[5]}
 
 exec "$binary" \
   --auto --hidden --no-popup \

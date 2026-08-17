@@ -1,0 +1,14 @@
+[Unit]
+Description=ROG Flow Z13 tablet-only automatic screen rotation
+After=graphical-session.target iio-sensor-proxy.service
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/z13-tablet-rotation
+KillMode=mixed
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

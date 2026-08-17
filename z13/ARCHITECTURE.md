@@ -14,31 +14,38 @@ reviewable as a small commit series.
 
 ## Boundaries
 
-The solution has four independent layers:
+The solution has five independent layers:
 
 1. `wvkbd`: Wayland input, rendering and input-method protocol only.
 2. `z13/layout.json`: all key positions, labels, actions and alternate symbols.
-3. `z13/theme.env`: Catppuccin colour tokens only.
+3. `z13/runtime/z13-theme`: validated colour roles from Omarchy's active theme.
 4. `z13/systemd/`: cover detection, process ownership and theme reload only.
+5. Root and `plugins/`: Omarchy bar widgets and touch-only shell interaction.
 
 No layer may contain values owned by another layer.  Generated C headers are
 build artefacts and must never be edited by hand.
+
+The renderer honours Hyprland's fractional-scale event even when it arrives
+after the first layer configure.  In that ordering case the surface is recreated
+once at the preferred scale, preventing the initial 1x buffer from being
+stretched and making text appear soft on the Z13's 1.6x panel.
 
 ## Installed footprint
 
 The installer may create only these active user files:
 
 - `~/.local/bin/z13-osk`
+- `~/.local/bin/z13-theme`
 - `~/.local/bin/z13-keyboard-state`
 - `~/.local/libexec/z13-osk/wvkbd-z13`
-- `~/.config/omarchy/z13-keyboard/theme.env`
 - `~/.config/omarchy/hooks/theme-set.d/50-z13-osk`
 - `~/.config/systemd/user/z13-osk.service`
 - `~/.config/systemd/user/z13-keyboard-state.service`
 - `~/.config/systemd/user/z13-keyboard-watch.path`
 
-The source repository lives at `~/.local/src/z13-touch-keyboard`.  One
-idempotent installer and one uninstaller own the complete footprint.
+The source repository lives at
+`~/.config/omarchy/plugins/io.github.gustavonline.rog-flow-z13-touch`. One
+idempotent setup script and one removal script own the complete footprint.
 
 ## Layout contract
 
@@ -49,55 +56,85 @@ email layouts are intentionally unsupported.
 
 | Row | Keys |
 | --- | --- |
-| 1 | `. 1 2 3 4 5 6 7 8 9 0 - + .` |
-| 2 | `Tab q w e r t y u i o p å Backspace` |
-| 3 | `Shift a s d f g h j k l æ ø Return` |
-| 4 | `. 123 z x c v b n m , . - .` |
-| 5 | `FN Super Space #+= Hide` |
+| 1 | `Escape 1 2 3 4 5 6 7 8 9 0 - + Backspace` |
+| 2 | `Tab q w e r t y u i o p å [ ]` |
+| 3 | `Caps a s d f g h j k l æ ø Return` |
+| 4 | `Shift z x c v b n m , . - Shift` |
+| 5 | `Emoji Omarchy Dictation Space .?123 #+= Hide` |
 
-All character, number and punctuation keys use exactly the same width.  Rare
-ISO dead keys are available on the symbol layer instead of occupying the main
-view.  Shift is one-shot; double-tap Shift toggles Caps Lock.  The Windows
-glyph is the Linux Super key and is one-shot, so Super, then `W`, closes a
-window without requiring two simultaneous fingers.  Tab remains as the compact
-`⇥` symbol because it is useful in forms, terminals and code editors.  Desktop
-modifiers and arrows live only on the function view.
+All character, number and punctuation keys use exactly the same width.  The
+visible functional keys create the physical stagger without invisible padding:
+the Q row begins at 1u, A at 1.5u and Z at 2u.  Rare ISO dead keys are available
+on the symbol layer instead of occupying the main view.  Shift is strictly
+one-shot; only the dedicated Caps key locks capitals.  The Omarchy/Super key
+uses Omarchy's packaged `U+E900` logo glyph and is one-shot, so Super, then `W`,
+closes a window without requiring two simultaneous fingers.  Escape follows the
+physical ROG cover and reads `ESC`.  Longer control labels use explicit per-key
+scales and bold weight instead of changing the legible size of ordinary
+letters.  Tab remains as `⇥` because it is useful in forms, terminals and code
+editors.  Both sides of the alphabetic row provide one-shot Shift.  There is no
+touch `FN` modifier: the main view exposes numbers and symbols directly, while
+an explicitly named `F1–12` page link lives on both secondary character views.
+Desktop modifiers and arrows live only on that F1–12 view.
+
+Square brackets occupy the two former upper-Return positions; flicking them up
+produces curly braces.  Return is a normal rectangular 1.5u key on the home row.
+The touch layout intentionally provides only Backspace; forward Delete adds no
+useful tablet workflow and is omitted.
 
 ### Numbers
 
 | Row | Keys |
 | --- | --- |
 | 1 | `1 2 3 4 5 6 7 8 9 0 Backspace` |
-| 2 | `- / : ; ( ) kr & @ \"` |
-| 3 | `#+= . , ? ! ' Backspace Return` |
-| 4 | `ABC FN Super Space #+= Hide` |
+| 2 | `- / : ; ( ) kr & @ \" Return` |
+| 3 | `. , ? ! ' ... #+=` |
+| 4 | `Emoji Omarchy Dictation Space ABC F1–12 Hide` |
 
 ### Symbols
 
 | Row | Keys |
 | --- | --- |
-| 1 | `[ ] { } # % ^ * + =` |
-| 2 | `_ \\ | ~ < > € £ ¥ •` |
-| 3 | `` ` · √ π ÷ × § © ® Backspace Return `` |
-| 4 | `123 ABC FN Super Space Emoji Hide` |
+| 1 | `[ ] { } # % ^ * + = Backspace` |
+| 2 | `_ \\ | ~ < > € £ ¥ • Return` |
+| 3 | `` ` ½ √ π ÷ × § © ® ... .?123 `` |
+| 4 | `Emoji Omarchy Dictation Space F1–12 ABC Hide` |
 
-### Functions
+### F1–12 / ROG tools
 
 | Row | Keys |
 | --- | --- |
-| 1 | `ESC F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 Delete` |
-| 2 | `Tab Caps INS HOME END PGUP PGDN Backspace Return ... Up` |
-| 3 | `CTRL Super ALT ALT GR Shift ... Left Down Right` |
-| 4 | `ABC 123 #+= Space Hide` |
+| 1 | `ESC F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 Backspace` |
+| 2 | `Tab Caps INS HOME END PGUP PGDN ... Up ... Return` |
+| 3 | `Shift CTRL ALT ALT GR ... Left Down Right` |
+| 4 | `Emoji Omarchy Dictation Space ABC .?123 Hide` |
 
-Function labels are uppercase.  Flicking F1–F12 upward emits the same hardware
+The page link says `F1–12`, not `FN`, because it opens a tool view rather than
+modifying another key.  Flicking F1–F12 upward emits the same hardware
 actions as the Nordic ROG cover: speaker mute, volume down/up, microphone mute,
 ROG profile, screenshot, display brightness down/up, display menu, touchpad,
-keyboard light and airplane mode.  The arrows form the physical inverted-T
-cluster at the far right.  Shift, Ctrl, Alt, Alt Gr and Super latch for exactly
-one following key unless tapped again.  Caps Lock remains active until toggled.
-Backspace (`⌫`) deletes left, while Delete (`⌦`) deletes right; both repeat
-while held.
+keyboard light and airplane mode.  The 0.8u arrows form a compact physical
+inverted-T cluster just left of Return, with Up centred exactly above Down.
+Shift is the first desktop modifier;
+Ctrl, Alt and Alt Gr follow it.  The duplicated Super key is omitted because
+the persistent Omarchy key already occupies the second bottom slot.  Modifiers
+latch for exactly one following key unless tapped again.  Caps Lock remains
+active until toggled.  Backspace (`⌫`) is top-right, Return is right-aligned
+beneath it, and Backspace repeats while held.
+
+Every view uses the same seven-slot bottom strip and the same widths:
+`Emoji Omarchy Dictation Space page page Hide`.  Omarchy therefore remains
+centered between the two other left-side actions, Space never moves, and only
+the two page destinations change.  `ABC`, `.?123`, `#+=` and `F1–12` are all
+1.5u navigation keys.  On Numbers and Symbols, Backspace is the sole edit key
+at the top right and Return sits directly beneath it; neither is duplicated in
+the character rows.
+
+The Numbers and Symbols views preserve the two home-page destination slots:
+Numbers places `ABC` then `F1–12` in them, while Symbols places `F1–12` then
+`ABC`.  The remaining sibling route lives as the rightmost key in the content
+area.  All four views render on a five-row grid, bottom anchored, so switching
+pages never changes key height or moves the persistent bottom strip.
 
 ## iPad-inspired interactions
 
@@ -110,17 +147,23 @@ while held.
   release, and automatic focus-loss hiding never arms this path.  The stable
   `/dev/input/by-path/platform-AMDI0010:00-event` link is used, with
   `Z13_TOUCH_DEVICE` available as a test or hardware override.
-- Tap Shift: uppercase the next character; double-tap: Caps Lock.
-- Flick up on a key with an alternate label: preview and enter its literal
-  symbol or hardware action.  Text symbols use
+- Tap Shift: uppercase the next character.  Repeated Shift taps never lock;
+  use the dedicated Caps key for Caps Lock.
+- Flick up on a number-row key to enter its visible alternate: `! @ # $ % & / (
+  ) = _ ?`; the bracket keys similarly produce `{ }`, and the punctuation keys
+  produce `; : _`.  Rare symbols remain on `.?123`/`#+=`.  Hardware alternates
+  remain on
+  the FN row.  Text symbols use
   `zwp_input_method_v2.commit_string`, never a temporary COMP/Menu keymap, so
   asynchronous Electron clients cannot turn `$`, `?` or `@` into a context
   menu.  The full layout is redrawn after every flick, preventing stale blue
   swipe feedback.
 - Hold Space for 280 ms and drag: move the caret using arrow events.
 - Hold Backspace or Delete: repeat after 420 ms, then every 55 ms.
-- Tap Emoji on the symbol view: open Omarchy's built-in emoji overlay through
-  its supported `Super+Ctrl+E` binding.
+- Tap Emoji on the main view: open Omarchy's built-in emoji overlay through its
+  supported `Super+Ctrl+E` binding.
+- Tap Dictation on the main view: invoke this installation's native
+  `Super+Ctrl+X` toggle-dictation binding.
 - Tap Hide: hide without changing focus or layout; the next touchscreen tap is
   resolved by the delayed focus-aware rule above.
 - No magnified key popup; pressed-key highlight remains enabled.
@@ -137,8 +180,7 @@ must never contain Danish labels or key positions.
 - Key corners are 10 logical pixels with equal 6-pixel internal gaps.
 - Font is `Inter 19`; rendering follows the compositor scale without a second
   manual rescale.
-- Light palette: Catppuccin Latte.
-- Dark palette: Catppuccin Macchiato.
+- Palette roles come from the active Omarchy theme's `colors.toml`.
 - Theme changes restart only `z13-osk.service`; layout and device state are
   untouched.
 

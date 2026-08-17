@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Print a safe wvkbd palette derived from the active Omarchy theme."""
+
+from __future__ import annotations
+
+import os
+import re
+import sys
+import tomllib
+from pathlib import Path
+
+
+HEX = re.compile(r"^#?([0-9a-fA-F]{6})$")
+
+
+def colour(value: object, fallback: str) -> str:
+    match = HEX.fullmatch(str(value).strip())
+    return match.group(1).lower() if match else fallback
+
+
+def main() -> int:
+    theme_dir = Path(
+        os.environ.get(
+            "Z13_OSK_THEME_DIR",
+            Path.home() / ".local/state/omarchy/current/theme",
+        )
+    )
+    colours_file = theme_dir / "colors.toml"
+
+    try:
+        with colours_file.open("rb") as handle:
+            data = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError) as error:
+        print(f"z13-theme: cannot read {colours_file}: {error}", file=sys.stderr)
+        return 1
+
+    background = colour(data.get("background"), "1e1e2e")
+    foreground = colour(data.get("foreground"), "cdd6f4")
+    accent = colour(data.get("accent"), foreground)
+    key = colour(data.get("lighter_background"), background)
+    special = colour(data.get("selection"), key)
+    press = colour(data.get("muted"), special)
+
+    print("\n".join((background, key, special, press, accent, foreground)))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
