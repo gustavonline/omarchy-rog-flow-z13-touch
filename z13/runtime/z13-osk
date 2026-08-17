@@ -2,9 +2,9 @@
 
 set -euo pipefail
 
-readonly binary="$HOME/.local/libexec/z13-osk/wvkbd-z13"
-readonly theme_file="$HOME/.config/omarchy/z13-keyboard/theme.env"
-readonly mode_file="$HOME/.local/state/omarchy/current/appearance-mode"
+readonly binary="${Z13_OSK_BINARY:-$HOME/.local/libexec/z13-osk/wvkbd-z13}"
+readonly theme_file="${Z13_OSK_THEME_FILE:-$HOME/.config/omarchy/z13-keyboard/theme.env}"
+readonly mode_file="${Z13_OSK_MODE_FILE:-$HOME/.local/state/omarchy/current/appearance-mode}"
 
 if [[ ! -x "$binary" ]]; then
   printf 'z13-osk: missing executable: %s\n' "$binary" >&2
