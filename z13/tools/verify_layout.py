@@ -11,23 +11,23 @@ import sys
 
 EXPECTED = {
     "Letters": [
-        [*list("1234567890"), "-", "+", "⌫"],
-        ["⇥", *list("qwertyuiopå")],
+        [*list("1234567890"), "-", "+"],
+        ["⇥", *list("qwertyuiopå"), "⌫"],
         ["⇧", *list("asdfghjklæø"), "↵"],
         [*list("zxcvbnm"), ",", ".", "-"],
-        ["123", "FN", "", "━━━━", "⌨↓"],
+        ["123", "FN", "", "━━━━", "#+=", "⌨↓"],
     ],
     "Numbers": [
         [*list("1234567890"), "⌫"],
         ["-", "/", ":", ";", "(", ")", "kr", "&", "@", '"'],
         ["#+=", ".", ",", "?", "!", "'", "⌫", "↵"],
-        ["ABC", "FN", "", "━━━━", "⌨↓"],
+        ["ABC", "FN", "", "━━━━", "#+=", "⌨↓"],
     ],
     "Symbols": [
         ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
         ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
         ["`", "·", "√", "π", "÷", "×", "§", "©", "®", "⌫", "↵"],
-        ["123", "ABC", "FN", "", "━━━━", "⌨↓"],
+        ["123", "ABC", "FN", "", "━━━━", "☺", "⌨↓"],
     ],
     "Functions": [
         ["ESC", *[f"F{i}" for i in range(1, 13)], "⌦"],
@@ -162,6 +162,9 @@ def verify_action(layer_id: str, row_index: int, key: dict) -> None:
     elif key_type == "macro":
         if label != "kr" or key.get("codes") != ["KEY_K", "KEY_R"]:
             raise SystemExit(f"{layer_id} row {row_index}: invalid kr macro")
+    elif key_type == "shortcut":
+        if label != "☺" or key.get("code") != "KEY_E" or key.get("modifier") != "Super|Ctrl":
+            raise SystemExit(f"{layer_id} row {row_index}: invalid emoji shortcut")
     elif key_type != "hide":
         raise SystemExit(f"{layer_id} row {row_index} {label}: unsupported type {key_type}")
 

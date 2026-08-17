@@ -49,11 +49,11 @@ email layouts are intentionally unsupported.
 
 | Row | Keys |
 | --- | --- |
-| 1 | `1 2 3 4 5 6 7 8 9 0 - + Backspace` |
-| 2 | `Tab q w e r t y u i o p å` |
+| 1 | `... 1 2 3 4 5 6 7 8 9 0 - + ...` |
+| 2 | `Tab q w e r t y u i o p å Backspace` |
 | 3 | `Shift a s d f g h j k l æ ø Return` |
 | 4 | `z x c v b n m , . -` |
-| 5 | `123 FN Super Space Hide` |
+| 5 | `123 FN Super Space #+= Hide` |
 
 All character, number and punctuation keys use exactly the same width.  Rare
 ISO dead keys are available on the symbol layer instead of occupying the main
@@ -70,7 +70,7 @@ modifiers and arrows live only on the function view.
 | 1 | `1 2 3 4 5 6 7 8 9 0 Backspace` |
 | 2 | `- / : ; ( ) kr & @ \"` |
 | 3 | `#+= . , ? ! ' Backspace Return` |
-| 4 | `ABC FN Super Space Hide` |
+| 4 | `ABC FN Super Space #+= Hide` |
 
 ### Symbols
 
@@ -79,7 +79,7 @@ modifiers and arrows live only on the function view.
 | 1 | `[ ] { } # % ^ * + =` |
 | 2 | `_ \\ | ~ < > € £ ¥ •` |
 | 3 | `` ` · √ π ÷ × § © ® Backspace Return `` |
-| 4 | `123 ABC FN Super Space Hide` |
+| 4 | `123 ABC FN Super Space Emoji Hide` |
 
 ### Functions
 
@@ -103,20 +103,26 @@ while held.
 
 - Tap a text field: show once through `zwp_input_method_v2`.
 - Leave text input: wait 500 ms before hiding to avoid Enter/focus flicker.
-- Tap the same focused field after manual hide: show again on the client's next
-  input-method generation.  Clients may express that generation through
-  activate, surrounding-text or only `done`; all three paths are handled.
-  Automatic focus-loss hiding is tracked separately and never reopens from a
-  stray `done` event.  No compositor-wide touch hook is used.
+- Tap the same focused field after manual hide: the Z13 touchscreen event arms
+  a 140 ms delayed reopen.  A real focus change cancels it through
+  `zwp_input_method_v2.deactivate`; an unchanged field remains active and
+  reopens exactly once.  The Hide gesture itself is ignored through its touch
+  release, and automatic focus-loss hiding never arms this path.  The stable
+  `/dev/input/by-path/platform-AMDI0010:00-event` link is used, with
+  `Z13_TOUCH_DEVICE` available as a test or hardware override.
 - Tap Shift: uppercase the next character; double-tap: Caps Lock.
 - Flick up on a key with an alternate label: preview and enter its literal
-  symbol or hardware action.  The temporary text keysym stays mapped until the
-  next text gesture so asynchronous clients can never reinterpret it as a
-  context-menu key.  The full layout is redrawn after every flick, preventing
-  stale blue swipe feedback.
+  symbol or hardware action.  Text symbols use
+  `zwp_input_method_v2.commit_string`, never a temporary COMP/Menu keymap, so
+  asynchronous Electron clients cannot turn `$`, `?` or `@` into a context
+  menu.  The full layout is redrawn after every flick, preventing stale blue
+  swipe feedback.
 - Hold Space for 280 ms and drag: move the caret using arrow events.
 - Hold Backspace or Delete: repeat after 420 ms, then every 55 ms.
-- Tap Hide: hide without changing focus or layout.
+- Tap Emoji on the symbol view: open Omarchy's built-in emoji overlay through
+  its supported `Super+Ctrl+E` binding.
+- Tap Hide: hide without changing focus or layout; the next touchscreen tap is
+  resolved by the delayed focus-aware rule above.
 - No magnified key popup; pressed-key highlight remains enabled.
 
 The alternate-symbol map is declared per key in `layout.json`.  Gesture code
@@ -166,8 +172,9 @@ Installation is not complete until all checks pass:
 2. `systemd-analyze --user verify` for every unit.
 3. Attach, detach, attach and detach again without duplicate processes.
 4. Auto-show, auto-hide, manual hide and direct same-field re-show in ChatGPT,
-   Chrome, Zen, a terminal and a native GTK application.  Verify both clients
-   that refresh surrounding text and clients that commit only a `done` batch.
+   Chrome, Zen, a terminal and a native GTK application.  A same-field tap must
+   log the delayed touch reopen; a tap outside text input must deactivate and
+   cancel it without flashing the keyboard.
 5. Every key in all four views emits the documented event; every visible corner
    symbol is actionable through an upward flick, including all twelve ROG
    hardware actions.

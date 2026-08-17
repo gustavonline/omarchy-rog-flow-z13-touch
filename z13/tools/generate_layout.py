@@ -10,7 +10,9 @@ import sys
 
 
 VALID_TYPES = {"code", "copy", "hide", "layout", "macro", "modifier", "pad", "shortcut"}
-VALID_MODIFIERS = {"Shift", "CapsLock", "Ctrl", "Alt", "Super", "AltGr"}
+VALID_MODIFIERS = {
+    "Shift", "CapsLock", "Ctrl", "Alt", "Super", "AltGr", "Super|Ctrl"
+}
 
 
 def c_string(value: str) -> str:

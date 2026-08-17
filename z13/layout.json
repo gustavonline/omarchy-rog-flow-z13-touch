@@ -14,6 +14,7 @@
       "alphabetic": true,
       "rows": [
         [
+          {"type":"pad","width":1.5},
           {"label":"1","shift":"!","code":"KEY_1"},
           {"label":"2","shift":"\"","code":"KEY_2"},
           {"label":"3","shift":"#","code":"KEY_3"},
@@ -26,7 +27,7 @@
           {"label":"0","shift":"=","code":"KEY_0"},
           {"label":"-","shift":"_","code":"KEY_SLASH"},
           {"label":"+","shift":"?","code":"KEY_MINUS"},
-          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":2.0}
+          {"type":"pad","width":0.5}
         ],
         [
           {"label":"⇥","code":"KEY_TAB","style":"special","width":1.5},
@@ -41,7 +42,7 @@
           {"label":"o","shift":"O","flick":"!","code":"KEY_O","flick_text":"!"},
           {"label":"p","shift":"P","flick":"?","code":"KEY_P","flick_text":"?"},
           {"label":"å","shift":"Å","code":"KEY_LEFTBRACE"},
-          {"type":"pad","width":1.5}
+          {"label":"⌫","type":"code","code":"KEY_BACKSPACE","style":"special","width":1.5}
         ],
         [
           {"label":"⇧","shift":"⇪","type":"modifier","modifier":"Shift","style":"special","width":1.5},
@@ -74,9 +75,10 @@
         ],
         [
           {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
-          {"label":"FN","type":"layout","target":"Functions","style":"special"},
-          {"label":"","type":"modifier","modifier":"Super","style":"special"},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":9.0},
+          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.25},
+          {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.25},
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":7.0},
+          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5},
           {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]
@@ -109,10 +111,11 @@
           {"type":"pad","width":1.5}
         ],
         [
-          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":2.0},
+          {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
           {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.25},
           {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.25},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":8.0},
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":7.0},
+          {"label":"#+=","type":"layout","target":"Symbols","style":"special","width":1.5},
           {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]
@@ -147,10 +150,11 @@
         [
           {"label":"123","type":"layout","target":"Numbers","style":"special","width":1.5},
           {"label":"ABC","type":"layout","target":"Letters","style":"special","width":1.5},
-          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.5},
+          {"label":"FN","type":"layout","target":"Functions","style":"special","width":1.25},
           {"label":"","type":"modifier","modifier":"Super","style":"special","width":1.25},
-          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":7.0},
-          {"label":"⌨↓","type":"hide","style":"special","width":1.25}
+          {"label":"━━━━","type":"code","code":"KEY_SPACE","width":5.5},
+          {"label":"☺","type":"shortcut","modifier":"Super|Ctrl","code":"KEY_E","style":"special","width":1.5},
+          {"label":"⌨↓","type":"hide","style":"special","width":1.5}
         ]
       ]
     },

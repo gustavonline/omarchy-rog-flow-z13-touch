@@ -137,6 +137,8 @@ struct kbd {
 
 	uint32_t last_popup_x, last_popup_y, last_popup_w, last_popup_h;
 	uint32_t last_shift_tap;
+	bool last_press_committed_text;
+	bool (*commit_codepoint)(uint32_t codepoint);
 };
 
 void draw_inset(struct drwsurf *ds, uint32_t x, uint32_t y, uint32_t width,

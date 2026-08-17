@@ -319,7 +319,9 @@ kbd_unpress_key(struct kbd *kb, uint32_t time)
         unlatch_super = (kb->mods & Super) == Super;
         unlatch_altgr = (kb->mods & AltGr) == AltGr;
 
-        if (kb->last_press->type == Copy) {
+        if (kb->last_press->type == Copy && kb->last_press_committed_text) {
+            kb->last_press_committed_text = false;
+        } else if (kb->last_press->type == Copy) {
             if (kb->debug) fprintf(stderr, "release copy key (unlatch_shift=%d, mods=%d)\n", unlatch_shift, kb->mods);
             zwp_virtual_keyboard_v1_key(kb->vkbd, time, 127, // COMP key
                                         WL_KEYBOARD_KEY_STATE_RELEASED);
@@ -586,10 +588,17 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
         }
         break;
     case Copy:
-        // copy code as unicode chr by setting a temporary keymap
         kb->last_swipe = kb->last_press = k;
         kbd_draw_key(kb, k, Press);
-        if (kb->mods & Shift) {
+        kb->last_press_committed_text =
+            kb->commit_codepoint &&
+            kb->commit_codepoint((kb->mods & Shift) && k->code_mod
+                                     ? k->code_mod
+                                     : k->code);
+        if (kb->last_press_committed_text) {
+            if (kb->debug)
+                fprintf(stderr, "Committed copy key through input method\n");
+        } else if (kb->mods & Shift) {
             if (kb->debug)
                     fprintf(stderr, "Pressing copy key (with shift)\n");
             create_and_upload_keymap(kb, kb->layout->keymap_name, k->code_mod);
@@ -643,7 +652,12 @@ kbd_emit_flick(struct kbd *kb, struct key *k, uint32_t time)
         zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
     }
 
-    if (k->flick_codepoint) {
+    if (k->flick_codepoint && kb->commit_codepoint &&
+        kb->commit_codepoint(k->flick_codepoint)) {
+        /* Text belongs on the input-method protocol.  Sending a temporary
+         * virtual-keyboard COMP mapping races some Electron clients, which
+         * can resolve it as Menu and open a context menu instead. */
+    } else if (k->flick_codepoint) {
         /* Keep COMP mapped to the emitted codepoint until the next text
          * gesture.  Restoring the normal keymap immediately after releasing
          * COMP races clients which consume the event asynchronously: they can

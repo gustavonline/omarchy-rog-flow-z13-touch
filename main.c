@@ -5,6 +5,8 @@
 #include "proto/viewporter-client-protocol.h"
 #include "proto/input-method-unstable-v2-protocol.h"
 #include <errno.h>
+#include <fcntl.h>
+#include <linux/input.h>
 #include <linux/input-event-codes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +52,8 @@ static struct wp_fractional_scale_manager_v1 *wfs_mgr;
 static struct wp_viewport *draw_surf_viewport, *popup_draw_surf_viewport;
 static struct wp_viewporter *viewporter;
 static struct zwp_input_method_manager_v2 *im_mgr;
+static struct zwp_input_method_v2 *input_method;
+static uint32_t input_method_serial = 0;
 static bool popup_xdg_surface_configured;
 static bool layer_surface_configured;
 
@@ -93,6 +97,8 @@ static bool touch_flicked = false;
 static int repeat_fd = -1;
 static struct key *repeat_key = NULL;
 static int hide_delay_fd = -1;
+static int touch_reopen_fd = -1;
+static int touch_device_fd = -1;
 
 static void cancel_delayed_hide(void)
 {
@@ -110,6 +116,72 @@ static void schedule_delayed_hide(void)
         .it_value = { .tv_sec = 0, .tv_nsec = 500000000 },
     };
     timerfd_settime(hide_delay_fd, 0, &timer, NULL);
+}
+
+static void cancel_touch_reopen(void)
+{
+    z13_visibility_cancel_touch_reopen(&visibility_policy);
+    if (touch_reopen_fd >= 0) {
+        struct itimerspec timer = {0};
+        timerfd_settime(touch_reopen_fd, 0, &timer, NULL);
+    }
+}
+
+static void schedule_touch_reopen(void)
+{
+    if (touch_reopen_fd < 0)
+        return;
+    struct itimerspec timer = {
+        .it_value = { .tv_sec = 0, .tv_nsec = 140000000 },
+    };
+    timerfd_settime(touch_reopen_fd, 0, &timer, NULL);
+}
+
+static int
+encode_utf8(uint32_t codepoint, char output[5])
+{
+    if (codepoint <= 0x7f) {
+        output[0] = codepoint;
+        output[1] = '\0';
+        return 1;
+    }
+    if (codepoint <= 0x7ff) {
+        output[0] = 0xc0 | (codepoint >> 6);
+        output[1] = 0x80 | (codepoint & 0x3f);
+        output[2] = '\0';
+        return 2;
+    }
+    if (codepoint >= 0xd800 && codepoint <= 0xdfff)
+        return 0;
+    if (codepoint <= 0xffff) {
+        output[0] = 0xe0 | (codepoint >> 12);
+        output[1] = 0x80 | ((codepoint >> 6) & 0x3f);
+        output[2] = 0x80 | (codepoint & 0x3f);
+        output[3] = '\0';
+        return 3;
+    }
+    if (codepoint <= 0x10ffff) {
+        output[0] = 0xf0 | (codepoint >> 18);
+        output[1] = 0x80 | ((codepoint >> 12) & 0x3f);
+        output[2] = 0x80 | ((codepoint >> 6) & 0x3f);
+        output[3] = 0x80 | (codepoint & 0x3f);
+        output[4] = '\0';
+        return 4;
+    }
+    return 0;
+}
+
+static bool
+im_commit_codepoint(uint32_t codepoint)
+{
+    char text[5];
+    if (!input_method || !visibility_policy.input_method_active ||
+        !encode_utf8(codepoint, text))
+        return false;
+
+    zwp_input_method_v2_commit_string(input_method, text);
+    zwp_input_method_v2_commit(input_method, input_method_serial);
+    return true;
 }
 
 static void stop_key_repeat(void)
@@ -672,6 +744,7 @@ im_activate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
     z13_visibility_activate(&visibility_policy);
     cancel_delayed_hide();
+    cancel_touch_reopen();
     show();
 }
 
@@ -679,6 +752,7 @@ void
 im_deactivate(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
     z13_visibility_deactivate(&visibility_policy);
+    cancel_touch_reopen();
     schedule_delayed_hide();
 }
 
@@ -686,14 +760,6 @@ void
 im_surrounding_text(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
                     const char *text, uint32_t cursor, uint32_t anchor)
 {
-    /* A second tap in an already-focused field does not emit activate again,
-     * but clients may refresh surrounding text.  Use that refresh to restore
-     * a hidden keyboard while text input remains active. */
-    if (z13_visibility_reopen_from_surrounding_text(&visibility_policy,
-                                                    hidden)) {
-        fprintf(stderr, "Reopening keyboard from surrounding-text update\n");
-        show();
-    }
 }
 
 void im_text_change_cause(void *data, struct zwp_input_method_v2 *zwp_input_method_v2,
@@ -709,13 +775,7 @@ void im_content_type(void *data, struct zwp_input_method_v2 *zwp_input_method_v2
 void
 im_done(void *data, struct zwp_input_method_v2 *zwp_input_method_v2)
 {
-    /* A client may commit a new text-input generation without repeating any
-     * of activate/surrounding-text/content-type.  This is the standards-based
-     * signal available for a second tap in an unchanged focused field. */
-    if (z13_visibility_reopen_from_done(&visibility_policy, hidden)) {
-        fprintf(stderr, "Reopening manually hidden keyboard from input-method done\n");
-        show();
-    }
+    input_method_serial++;
 }
 
 void
@@ -953,6 +1013,7 @@ show()
     }
 
     z13_visibility_shown(&visibility_policy);
+    cancel_touch_reopen();
 
     refresh_available_dimension();
     redimension_keyboard();
@@ -1338,10 +1399,10 @@ main(int argc, char **argv)
              landscape_layer_names_list);
 
     if (im_mgr != NULL) {
-        struct zwp_input_method_v2 *input_method =
-            zwp_input_method_manager_v2_get_input_method(im_mgr, seat);
+        input_method = zwp_input_method_manager_v2_get_input_method(im_mgr, seat);
         zwp_input_method_v2_add_listener(input_method, &input_method_listener, NULL);
     }
+    keyboard.commit_codepoint = im_commit_codepoint;
 
     for (i = 0; i < countof(schemes); i++) {
         schemes[i].font_description =
@@ -1351,15 +1412,19 @@ main(int argc, char **argv)
     if (!hidden)
         show();
 
-    struct pollfd fds[4];
+    struct pollfd fds[6] = {0};
     int WAYLAND_FD = 0;
     int SIGNAL_FD = 1;
     int REPEAT_FD = 2;
     int HIDE_DELAY_FD = 3;
+    int TOUCH_DEVICE_FD = 4;
+    int TOUCH_REOPEN_FD = 5;
     fds[WAYLAND_FD].events = POLLIN;
     fds[SIGNAL_FD].events = POLLIN;
     fds[REPEAT_FD].events = POLLIN;
     fds[HIDE_DELAY_FD].events = POLLIN;
+    fds[TOUCH_DEVICE_FD].events = POLLIN;
+    fds[TOUCH_REOPEN_FD].events = POLLIN;
 
     fds[WAYLAND_FD].fd = wl_display_get_fd(display);
     if (fds[WAYLAND_FD].fd == -1) {
@@ -1393,9 +1458,27 @@ main(int argc, char **argv)
     }
     fds[HIDE_DELAY_FD].fd = hide_delay_fd;
 
+    const char *touch_device = getenv("Z13_TOUCH_DEVICE");
+    if (!touch_device || !touch_device[0])
+        touch_device = "/dev/input/by-path/platform-AMDI0010:00-event";
+    touch_device_fd = open(touch_device, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+    fds[TOUCH_DEVICE_FD].fd = touch_device_fd;
+    if (touch_device_fd < 0)
+        fprintf(stderr, "Touch reopen unavailable for %s: %s\n",
+                touch_device, strerror(errno));
+    else
+        fprintf(stderr, "Touch reopen monitoring %s\n", touch_device);
+
+    touch_reopen_fd = timerfd_create(CLOCK_MONOTONIC,
+                                     TFD_CLOEXEC | TFD_NONBLOCK);
+    if (touch_reopen_fd == -1) {
+        die("Failed to create touch reopen timer: %d\n", errno);
+    }
+    fds[TOUCH_REOPEN_FD].fd = touch_reopen_fd;
+
     while (run_display) {
         wl_display_flush(display);
-        poll(fds, 4, -1);
+        poll(fds, countof(fds), -1);
 
         if (fds[WAYLAND_FD].revents & POLLIN)
             wl_display_dispatch(display);
@@ -1441,6 +1524,30 @@ main(int argc, char **argv)
             if (read(hide_delay_fd, &expirations, sizeof(expirations)) == sizeof(expirations)) {
                 z13_visibility_automatic_hide(&visibility_policy);
                 hide();
+            }
+        }
+
+        if (fds[TOUCH_DEVICE_FD].revents & POLLIN) {
+            struct input_event event;
+            while (read(touch_device_fd, &event, sizeof(event)) == sizeof(event)) {
+                if (event.type == EV_KEY && event.code == BTN_TOUCH) {
+                    if (z13_visibility_touch_event(&visibility_policy, hidden,
+                                                   event.value == 1)) {
+                        fprintf(stderr, "Touch while manually hidden; waiting for focus result\n");
+                        schedule_touch_reopen();
+                    }
+                }
+            }
+        }
+
+        if (fds[TOUCH_REOPEN_FD].revents & POLLIN) {
+            uint64_t expirations = 0;
+            if (read(touch_reopen_fd, &expirations, sizeof(expirations)) ==
+                    sizeof(expirations) &&
+                z13_visibility_reopen_after_touch_delay(&visibility_policy,
+                                                        hidden)) {
+                fprintf(stderr, "Reopening keyboard after same-field touch\n");
+                show();
             }
         }
     }
