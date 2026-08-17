@@ -6,6 +6,11 @@ repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 test_dir=$(mktemp -d)
 trap 'rm -rf -- "$test_dir"' EXIT
 
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -I"$repo" \
+  "$repo/z13/tools/verify_visibility_policy.c" \
+  -o "$test_dir/verify-visibility-policy"
+"$test_dir/verify-visibility-policy"
+
 cover="$test_dir/cover"
 log="$test_dir/systemctl.log"
 : >"$log"
@@ -61,4 +66,4 @@ for mode in light dark; do
   fi
 done
 
-printf 'runtime contract: OK (cover transitions, install refresh and Catppuccin light/dark launch)\n'
+printf 'runtime contract: OK (visibility policy, cover transitions, install refresh and Catppuccin light/dark launch)\n'
