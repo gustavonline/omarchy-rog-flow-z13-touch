@@ -3,9 +3,10 @@
 ## Objective
 
 Provide one predictable Danish touch keyboard for the ROG Flow Z13 under
-Omarchy/Hyprland.  It should feel familiar to an iPad user while retaining the
-desktop keys Linux applications need.  Application input hints must never
-replace the selected layout.
+Omarchy/Hyprland.  It combines the Nordic Z13 cover's ISO row structure with
+touch-first gestures inspired by iPadOS while retaining the desktop keys Linux
+applications need.  Application input hints must never replace the selected
+layout.
 
 The implementation is pinned to upstream wvkbd 0.20 (`6b41504`) on the
 `z13-ipados` branch.  Upstream remains the Git remote and all Z13 changes stay
@@ -48,15 +49,16 @@ email layouts are intentionally unsupported.
 
 | Row | Keys |
 | --- | --- |
-| 1 | `q w e r t y u i o p å` |
-| 2 | `a s d f g h j k l æ ø` |
-| 3 | `Shift z x c v b n m Backspace` |
-| 4 | `123 FN SUPER Space . Return Hide` |
+| 1 | `½ 1 2 3 4 5 6 7 8 9 0 + ´ Backspace` |
+| 2 | `TAB q w e r t y u i o p å ¨` |
+| 3 | `CAPS a s d f g h j k l æ ø ' ENTER` |
+| 4 | `SHIFT < z x c v b n m , . - SHIFT` |
+| 5 | `CTRL FN Super ALT Space ALT GR Left Up Down Right Hide` |
 
-`æ` precedes `ø`, matching the supplied iPadOS reference.  Shift is one-shot;
-double-tap Shift toggles Caps Lock.  The `SUPER` key is the Linux equivalent of
-the Command key and is one-shot, so `SUPER`, then `W`, closes a window without
-requiring two simultaneous fingers.
+The first four rows follow the Danish XKB symbols and the physical Nordic ISO
+order.  Shift is one-shot; double-tap Shift toggles Caps Lock.  The Windows
+glyph is the Linux Super key and is one-shot, so Super, then `W`, closes a
+window without requiring two simultaneous fingers.
 
 ### Numbers
 
@@ -64,8 +66,8 @@ requiring two simultaneous fingers.
 | --- | --- |
 | 1 | `1 2 3 4 5 6 7 8 9 0` |
 | 2 | `- / : ; ( ) kr & @ \"` |
-| 3 | `#+= . , ? ! ' Backspace` |
-| 4 | `ABC FN SUPER Space . Return Hide` |
+| 3 | `#+= . , ? ! ' Backspace ENTER` |
+| 4 | `ABC FN Super ALT Space ALT GR Hide` |
 
 ### Symbols
 
@@ -73,21 +75,21 @@ requiring two simultaneous fingers.
 | --- | --- |
 | 1 | `[ ] { } # % ^ * + =` |
 | 2 | `_ \\ | ~ < > € £ ¥ •` |
-| 3 | `` ` · √ π ÷ × § © ® Backspace `` |
-| 4 | `123 ABC FN SUPER Space Return Hide` |
+| 3 | `` ` · √ π ÷ × § © ® Backspace ENTER `` |
+| 4 | `123 ABC FN Super Space ALT GR Hide` |
 
 ### Functions
 
 | Row | Keys |
 | --- | --- |
 | 1 | `ESC F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 DEL` |
-| 2 | `TAB INS HOME END PGUP PGDN Backspace Return` |
-| 3 | `CTRL SUPER ALT ALTGR SHIFT Up` |
-| 4 | `UNDO CUT COPY PASTE SHOT Left Down Right` |
-| 5 | `ABC 123 Space Hide` |
+| 2 | `TAB CAPS INS HOME END PGUP PGDN SHOT Backspace ENTER` |
+| 3 | `CTRL Super ALT ALT GR SHIFT Left Up Down Right` |
+| 4 | `ABC 123 #+= Space Hide` |
 
-Function labels are uppercase.  Modifier keys latch for exactly one following
-key unless tapped again.  Backspace and Delete repeat while held.
+Function labels are uppercase.  Shift, Ctrl, Alt, Alt Gr and Super latch for
+exactly one following key unless tapped again.  Caps Lock remains active until
+toggled.  Backspace and Delete repeat while held.
 
 ## iPad-inspired interactions
 
@@ -95,7 +97,9 @@ key unless tapped again.  Backspace and Delete repeat while held.
 - Leave text input: wait 500 ms before hiding to avoid Enter/focus flicker.
 - Tap the same focused field after manual hide: show again.
 - Tap Shift: uppercase the next character; double-tap: Caps Lock.
-- Swipe down on a letter with an alternate label: enter that alternate symbol.
+- Flick up on a key with an alternate label: preview and enter that literal
+  symbol.  The alternate is emitted directly and never creates a drawable
+  zero-sized key.
 - Hold Space for 280 ms and drag: move the caret using arrow events.
 - Hold Backspace or Delete: repeat after 420 ms, then every 55 ms.
 - Tap Hide: hide without changing focus or layout.
@@ -106,9 +110,9 @@ must never contain Danish labels or key positions.
 
 ## Geometry and theme
 
-- Keyboard layer reserves 340 logical pixels at the bottom.
-- Visible panel width is 92% of the display and is centred; the outer 4% on
-  each side remains transparent while application windows are resized above it.
+- Keyboard layer reserves 360 logical pixels at the bottom.
+- Visible panel follows Omarchy's normal outer gap (0.8% per side) while the
+  full-width layer keeps application windows resized above it.
 - Outer panel corners remain square to match Omarchy windows.
 - Key corners are 10 logical pixels with equal 6-pixel internal gaps.
 - Font is `Inter 19`; rendering follows the compositor scale without a second
@@ -146,9 +150,11 @@ Installation is not complete until all checks pass:
 3. Attach, detach, attach and detach again without duplicate processes.
 4. Auto-show, auto-hide, manual hide and same-field re-show in ChatGPT, Chrome,
    Zen, a terminal and a native GTK application.
-5. Every key in all four views emits the documented event.
-6. One-shot Shift, double-tap Caps Lock, SUPER shortcuts and held Delete work.
-7. Light and dark screenshots show crisp text, centred 92% geometry and the
+5. Every key in all four views emits the documented event; every small corner
+   symbol is actionable through an upward flick.
+6. One-shot Shift, direct/double-tap Caps Lock, Super shortcuts and held Delete
+   work.
+7. Light and dark screenshots show crisp text, Omarchy-gap geometry and the
    correct Catppuccin palette.
 8. Suspend/resume while detached and attached restores the correct state.
 9. Uninstall returns to Fcitx with no active OSK units or files.
@@ -157,4 +163,6 @@ Installation is not complete until all checks pass:
 
 - wvkbd: <https://git.sr.ht/~proycon/wvkbd>
 - Hyprland input variables: <https://wiki.hypr.land/Configuring/Basics/Variables/>
+- ASUS ROG Flow Z13 gallery: <https://rog.asus.com/us/laptops/rog-flow/rog-flow-z13-2025/gallery/>
+- Danish XKB symbols: `/usr/share/X11/xkb/symbols/dk`
 - Apple iPad keyboard behaviour: <https://support.apple.com/guide/ipad/type-with-the-onscreen-keyboard-ipad997da459/ipados>

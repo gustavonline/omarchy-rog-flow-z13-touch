@@ -82,7 +82,7 @@ struct key {
 
 	/* Z13 extensions live after every upstream positional field.  Keeping the
 	 * original prefix ABI intact lets the stock layouts continue to compile. */
-	const char *flick_label; // small alternate label emitted by a downward flick
+	const char *flick_label; // small alternate label emitted by an upward flick
 	const uint32_t flick_code;
 	const uint32_t flick_codepoint;
 	const uint32_t *macro_codes;

@@ -404,7 +404,9 @@ wl_touch_motion(void *data, struct wl_touch *wl_touch, uint32_t time,
     if (touch_flick_key && touch_flick_id == id) {
         int dx = (int)touch_x - touch_flick_x;
         int dy = (int)touch_y - touch_flick_y;
-        if (!touch_flicked && dy >= 18 && abs(dy) > abs(dx)) {
+        /* Alternate labels live at the top of the key, so the physical
+         * gesture follows the label: drag upward to select it. */
+        if (!touch_flicked && dy <= -18 && abs(dy) > abs(dx)) {
             touch_flicked = true;
             kbd_draw_key(&keyboard, touch_flick_key, Swipe);
         }

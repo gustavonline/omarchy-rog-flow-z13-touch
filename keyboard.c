@@ -426,6 +426,19 @@ kbd_motion_key(struct kbd *kb, uint32_t time, uint32_t x, uint32_t y)
     kbd_clear_last_popup(kb);
 }
 
+static void
+kbd_toggle_capslock(struct kbd *kb, uint32_t time)
+{
+    kb->mods ^= CapsLock;
+    zwp_virtual_keyboard_v1_key_mods(
+        kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_PRESSED);
+    zwp_virtual_keyboard_v1_key_mods(
+        kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_RELEASED);
+    zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
+    kb->last_shift_tap = 0;
+    kbd_draw_layout(kb);
+}
+
 void
 kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
 {
@@ -487,15 +500,12 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
         }
         break;
     case Mod:
+        if (k->code == CapsLock) {
+            kbd_toggle_capslock(kb, time);
+            break;
+        }
         if (k->code == Shift && (kb->mods & CapsLock)) {
-            kb->mods ^= CapsLock;
-            zwp_virtual_keyboard_v1_key_mods(
-                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_PRESSED);
-            zwp_virtual_keyboard_v1_key_mods(
-                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_RELEASED);
-            zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
-            kb->last_shift_tap = 0;
-            kbd_draw_layout(kb);
+            kbd_toggle_capslock(kb, time);
             break;
         }
         if (k->code == Shift && time && kb->last_shift_tap &&
@@ -505,14 +515,7 @@ kbd_press_key(struct kbd *kb, struct key *k, uint32_t time)
                 zwp_virtual_keyboard_v1_key_mods(
                     kb->vkbd, time, Shift, WL_KEYBOARD_KEY_STATE_RELEASED);
             }
-            kb->mods ^= CapsLock;
-            zwp_virtual_keyboard_v1_key_mods(
-                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_PRESSED);
-            zwp_virtual_keyboard_v1_key_mods(
-                kb->vkbd, time, CapsLock, WL_KEYBOARD_KEY_STATE_RELEASED);
-            zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
-            kb->last_shift_tap = 0;
-            kbd_draw_layout(kb);
+            kbd_toggle_capslock(kb, time);
             break;
         }
         if (k->code == Shift)
@@ -627,17 +630,36 @@ kbd_emit_flick(struct kbd *kb, struct key *k, uint32_t time)
     if (!k->flick_codepoint && !k->flick_code)
         return;
 
-    struct key flick = {
-        .label = k->flick_label,
-        .shift_label = k->flick_label,
-        .flick_label = "",
-        .width = k->width,
-        .type = k->flick_codepoint ? Copy : Code,
-        .code = k->flick_codepoint ? k->flick_codepoint : k->flick_code,
-        .scheme = k->scheme,
-    };
-    kbd_press_key(kb, &flick, time);
-    kbd_release_key(kb, time);
+    /* Flicks are complete gestures, not synthetic drawable keys.  The old
+     * implementation created a temporary key without pixel geometry and sent
+     * it through kbd_draw_key(), producing zero-sized pixman damage regions
+     * and eventually blank-looking keys.  Emit the event directly instead. */
+    uint32_t transient_mods =
+        kb->mods & (Shift | Ctrl | Alt | Super | AltGr);
+    if (transient_mods) {
+        zwp_virtual_keyboard_v1_key_mods(
+            kb->vkbd, time, transient_mods, WL_KEYBOARD_KEY_STATE_RELEASED);
+        kb->mods &= ~transient_mods;
+        zwp_virtual_keyboard_v1_modifiers(kb->vkbd, kb->mods, 0, 0, 0);
+    }
+
+    if (k->flick_codepoint) {
+        create_and_upload_keymap(kb, kb->layout->keymap_name,
+                                 k->flick_codepoint);
+        zwp_virtual_keyboard_v1_key(kb->vkbd, time, 127,
+                                    WL_KEYBOARD_KEY_STATE_PRESSED);
+        zwp_virtual_keyboard_v1_key(kb->vkbd, time, 127,
+                                    WL_KEYBOARD_KEY_STATE_RELEASED);
+        create_and_upload_keymap(kb, kb->layout->keymap_name, 0);
+    } else {
+        zwp_virtual_keyboard_v1_key(kb->vkbd, time, k->flick_code,
+                                    WL_KEYBOARD_KEY_STATE_PRESSED);
+        zwp_virtual_keyboard_v1_key(kb->vkbd, time, k->flick_code,
+                                    WL_KEYBOARD_KEY_STATE_RELEASED);
+    }
+
+    if (transient_mods)
+        kbd_draw_layout(kb);
 }
 
 void
@@ -721,6 +743,8 @@ kbd_draw_key(struct kbd *kb, struct key *k, enum key_draw_type type)
 {
     const char *label = ((kb->mods & Shift)||((kb->mods & CapsLock) && 
         strlen(k->label) == 1 && isalpha(k->label[0]))) ? k->shift_label : k->label;
+    if (type == Swipe && k->flick_label && k->flick_label[0])
+        label = k->flick_label;
     if (kb->debug)
         fprintf(stderr, "Draw key +%d+%d %dx%d -> %s\n", k->x, k->y, k->w, k->h,
                 label);

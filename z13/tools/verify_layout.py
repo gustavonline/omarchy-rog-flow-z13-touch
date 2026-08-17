@@ -11,37 +11,37 @@ import sys
 
 EXPECTED = {
     "Letters": [
-        list("qwertyuiopå"),
-        list("asdfghjklæø"),
-        ["⇧", *list("zxcvbnm"), "⌫"],
-        ["123", "FN", "SUPER", "Dansk", ".", "↵", "⌨↓"],
+        ["½", *list("1234567890"), "+", "´", "⌫"],
+        ["TAB", *list("qwertyuiopå"), "¨"],
+        ["CAPS", *list("asdfghjklæø"), "'", "ENTER"],
+        ["SHIFT", "<", *list("zxcvbnm"), ",", ".", "-", "SHIFT"],
+        ["CTRL", "FN", "", "ALT", "━━━━", "ALT GR", "←", "↑", "↓", "→", "⌨↓"],
     ],
     "Numbers": [
         list("1234567890"),
         ["-", "/", ":", ";", "(", ")", "kr", "&", "@", '"'],
-        ["#+=", ".", ",", "?", "!", "'", "⌫"],
-        ["ABC", "FN", "SUPER", "Dansk", ".", "↵", "⌨↓"],
+        ["#+=", ".", ",", "?", "!", "'", "⌫", "ENTER"],
+        ["ABC", "FN", "", "ALT", "━━━━", "ALT GR", "⌨↓"],
     ],
     "Symbols": [
         ["[", "]", "{", "}", "#", "%", "^", "*", "+", "="],
         ["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"],
-        ["`", "·", "√", "π", "÷", "×", "§", "©", "®", "⌫"],
-        ["123", "ABC", "FN", "SUPER", "Dansk", "↵", "⌨↓"],
+        ["`", "·", "√", "π", "÷", "×", "§", "©", "®", "⌫", "ENTER"],
+        ["123", "ABC", "FN", "", "━━━━", "ALT GR", "⌨↓"],
     ],
     "Functions": [
         ["ESC", *[f"F{i}" for i in range(1, 13)], "DEL"],
-        ["TAB", "INS", "HOME", "END", "PGUP", "PGDN", "⌫", "ENTER"],
-        ["CTRL", "SUPER", "ALT", "ALTGR", "SHIFT", "↑"],
-        ["UNDO", "CUT", "COPY", "PASTE", "SHOT", "←", "↓", "→"],
-        ["ABC", "123", "SUPER", "Dansk", "⌨↓"],
+        ["TAB", "CAPS", "INS", "HOME", "END", "PGUP", "PGDN", "SHOT", "⌫", "ENTER"],
+        ["CTRL", "", "ALT", "ALT GR", "SHIFT", "←", "↑", "↓", "→"],
+        ["ABC", "123", "#+=", "━━━━", "⌨↓"],
     ],
 }
 
 EXPECTED_GEOMETRY = {
-    "height": 340,
-    "landscape_height": 340,
+    "height": 360,
+    "landscape_height": 360,
     "key_border": 6,
-    "panel_margin_ratio": 0.04,
+    "panel_margin_ratio": 0.008,
 }
 
 EXPECTED_CODES = {
@@ -51,9 +51,17 @@ EXPECTED_CODES = {
     "å": "KEY_LEFTBRACE",
     "æ": "KEY_SEMICOLON",
     "ø": "KEY_APOSTROPHE",
+    "½": "KEY_GRAVE",
+    "+": "KEY_MINUS",
+    "´": "KEY_EQUAL",
+    "¨": "KEY_RIGHTBRACE",
+    "'": "KEY_BACKSLASH",
+    "<": "KEY_102ND",
+    ",": "KEY_COMMA",
+    ".": "KEY_DOT",
+    "-": "KEY_SLASH",
     "⌫": "KEY_BACKSPACE",
-    "Dansk": "KEY_SPACE",
-    "↵": "KEY_ENTER",
+    "━━━━": "KEY_SPACE",
     "ESC": "KEY_ESC",
     "DEL": "KEY_DELETE",
     "TAB": "KEY_TAB",
@@ -71,12 +79,12 @@ EXPECTED_CODES = {
 }
 
 EXPECTED_MODIFIERS = {
-    "⇧": "Shift",
     "SHIFT": "Shift",
+    "CAPS": "CapsLock",
     "CTRL": "Ctrl",
-    "SUPER": "Super",
+    "": "Super",
     "ALT": "Alt",
-    "ALTGR": "AltGr",
+    "ALT GR": "AltGr",
 }
 
 EXPECTED_LAYOUT_TARGETS = {
@@ -86,17 +94,20 @@ EXPECTED_LAYOUT_TARGETS = {
     "FN": "Functions",
 }
 
-EXPECTED_SHORTCUTS = {
-    "UNDO": ("KEY_Z", "Ctrl"),
-    "CUT": ("KEY_X", "Ctrl"),
-    "COPY": ("KEY_C", "Ctrl"),
-    "PASTE": ("KEY_V", "Ctrl"),
-}
-
 EXPECTED_FLICKS = {
+    "½": "§",
+    **dict(zip("1234567890", ['!', '"', '#', '¤', '%', '&', '/', '(', ')', '='])),
+    "+": "?",
+    "´": "`",
     **dict(zip("qwertyuiop", "1234567890")),
+    "¨": "^",
     **dict(zip("asdfghjklæø", ["@", "#", "$", "&", "*", "(", ")", "'", '"', "€", "£"])),
+    "'": "*",
+    "<": ">",
     **dict(zip("zxcvbnm", ["%", "-", "+", "=", "/", ";", ":"])),
+    ",": ";",
+    ".": ":",
+    "-": "_",
 }
 
 
@@ -142,13 +153,7 @@ def verify_action(layer_id: str, row_index: int, key: dict) -> None:
                 f"{layer_id} row {row_index} {label}: copy text differs from label"
             )
     elif key_type == "shortcut":
-        expected = EXPECTED_SHORTCUTS.get(label)
-        actual = (key.get("code"), key.get("modifier"))
-        if actual != expected:
-            raise SystemExit(
-                f"{layer_id} row {row_index} {label}: expected shortcut {expected}, "
-                f"found {actual}"
-            )
+        raise SystemExit(f"{layer_id} row {row_index} {label}: shortcuts are not part of the layout contract")
     elif key_type == "macro":
         if label != "kr" or key.get("codes") != ["KEY_K", "KEY_R"]:
             raise SystemExit(f"{layer_id} row {row_index}: invalid kr macro")
@@ -193,16 +198,12 @@ def main() -> None:
             f"Letters: flick map mismatch:\nexpected {EXPECTED_FLICKS}\nactual   {actual_flicks}"
         )
     for key in flick_keys:
-        if key["flick"].isascii() and key["flick"].isalnum():
-            expected_code = f"KEY_{key['flick'].upper()}"
-            if key.get("flick_code") != expected_code or "flick_text" in key:
-                raise SystemExit(f"Letters {key['label']}: invalid keycode flick")
-        elif key.get("flick_text") != key["flick"] or "flick_code" in key:
-            raise SystemExit(f"Letters {key['label']}: invalid text flick")
+        if key.get("flick_text") != key["flick"] or "flick_code" in key:
+            raise SystemExit(f"Letters {key['label']}: flick must emit its literal label")
 
     letter_keys = [
         key
-        for row in letters[:3]
+        for row in letters[:4]
         for key in row
         if key.get("type", "code") == "code" and len(key.get("label", "")) == 1
         and key["label"].isalpha()
@@ -212,8 +213,8 @@ def main() -> None:
             raise SystemExit(f"Letters {key['label']}: invalid Shift label")
 
     print(
-        "layout contract: OK (4 layers, 17 rows, width 12, Danish iPad order, "
-        "actions, Shift and 28 flicks)"
+        "layout contract: OK (4 layers, 17 rows, width 12, Nordic Z13 order, "
+        "desktop modifiers and 47 upward flicks)"
     )
 
 

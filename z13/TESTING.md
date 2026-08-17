@@ -10,8 +10,10 @@ Run this list in order after installing with `z13/install.sh`.
    touch a field, type Danish text, press Return, wait 500 ms, and touch the
    same field again.  Show/hide must be stable and app-independent.
 4. Confirm the four fixed layers and their labels against `layout.json`.
-5. Confirm one-shot Shift, double-tap Caps Lock, `SUPER` then `W`, held
-   Backspace/Delete, letter flick-down alternates and hold/drag Space.
+5. Confirm one-shot Shift, double-tap Caps Lock, Super then `W`, held
+   Backspace/Delete, upward alternate flicks and hold/drag Space.  After at
+   least ten flicks, the journal must contain no pixman rectangle warnings and
+   every key must still render.
 6. Confirm the light and dark Catppuccin palettes after a theme switch.
 7. Attach, detach, attach and detach once more.  At every point there must be
    exactly one input-method process appropriate to the current mode.
