@@ -36,10 +36,21 @@ for plugin in "$repo"/plugins/*; do
   omarchy plugin validate "$plugin"
 done
 
-if command -v qmllint >/dev/null; then
-  qmllint -I /usr/share/omarchy/shell "$repo/KeyboardToggle.qml"
+qml_lint=$(command -v qmllint || true)
+if [[ -z "$qml_lint" && -x /usr/lib/qt6/bin/qmllint ]]; then
+  qml_lint=/usr/lib/qt6/bin/qmllint
+fi
+if [[ -n "$qml_lint" ]]; then
+  qml_log="$python_cache/qmllint.log"
+  if ! "$qml_lint" -I /usr/share/omarchy/shell "$repo/KeyboardToggle.qml" >"$qml_log" 2>&1; then
+    cat "$qml_log" >&2
+    exit 1
+  fi
   for qml in "$repo"/plugins/*/*.qml "$repo"/plugins/*/indicators/*.qml; do
-    qmllint -I /usr/share/omarchy/shell "$qml"
+    if ! "$qml_lint" -I /usr/share/omarchy/shell "$qml" >"$qml_log" 2>&1; then
+      cat "$qml_log" >&2
+      exit 1
+    fi
   done
 else
   printf 'qmllint unavailable; Omarchy manifest validation still passed.\n'
