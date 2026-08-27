@@ -2,10 +2,12 @@
   "schemaVersion": 1,
   "id": "io.github.gustavonline.z13-touch-tray",
   "name": "Z13 Touch System Tray",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Gustav Andersen",
+  "license": "GPL-3.0-only",
   "description": "Omarchy's system tray with a persistent one-tap drawer toggle",
   "kinds": ["bar-widget"],
+  "activation": "on-demand",
   "entryPoints": {"barWidget": "TrayToggle.qml"},
   "barWidget": {
     "displayName": "Z13 Touch System Tray",

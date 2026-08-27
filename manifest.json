@@ -2,15 +2,18 @@
   "schemaVersion": 1,
   "id": "io.github.gustavonline.rog-flow-z13-touch",
   "name": "ROG Flow Z13 Touch",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "author": "Gustav Andersen",
+  "license": "GPL-3.0-only",
   "description": "Touch keyboard toggle and tablet integration for the 2025 ROG Flow Z13",
   "kinds": ["bar-widget"],
+  "activation": "on-demand",
   "entryPoints": {"barWidget": "KeyboardToggle.qml"},
   "barWidget": {
     "displayName": "Z13 Touch Keyboard",
     "description": "Show or hide the Z13 virtual keyboard",
     "category": "System",
+    "aliases": ["z13", "touch", "keyboard", "tablet", "rog"],
     "allowMultiple": false,
     "defaultSection": "right"
   }

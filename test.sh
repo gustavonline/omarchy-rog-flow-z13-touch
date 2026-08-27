@@ -4,6 +4,22 @@ set -euo pipefail
 
 repo=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
+jq -e '
+  .schemaVersion == 1 and
+  .id == "io.github.gustavonline.rog-flow-z13-touch" and
+  .version == "0.3.0" and
+  .license == "GPL-3.0-only" and
+  .entryPoints.barWidget == "KeyboardToggle.qml"
+' "$repo/manifest.json" >/dev/null
+for manifest in "$repo"/plugins/*/manifest.json; do
+  jq -e '
+    .schemaVersion == 1 and
+    .version == "0.3.0" and
+    .license == "GPL-3.0-only" and
+    (.kinds | index("bar-widget")) != null
+  ' "$manifest" >/dev/null
+done
+
 python3 "$repo/z13/tools/verify_layout.py" "$repo/z13/layout.json"
 "$repo/z13/tools/verify_runtime.sh"
 python_cache=$(mktemp -d)
@@ -31,17 +47,26 @@ jq -e '
   [.bar.layout.right[].id] == ["omarchy.tray", "omarchy.power"]
 ' "$shell_fixture" >/dev/null
 
-omarchy plugin validate "$repo"
-for plugin in "$repo"/plugins/*; do
-  omarchy plugin validate "$plugin"
-done
+if command -v omarchy >/dev/null; then
+  omarchy plugin validate "$repo" >/dev/null
+  for plugin in "$repo"/plugins/*; do
+    omarchy plugin validate "$plugin" >/dev/null
+  done
+fi
 
 # Tablet touch must be governed only by the explicit one-tap state. Omarchy's
 # center-wide hover hold can be set by a synthetic pointer left behind after a
 # tap on the right tray; allowing it here causes the middle indicators to flash.
 indicators_qml="$repo/plugins/io.github.gustavonline.z13-touch-indicators/Indicators.qml"
-rg -F 'readonly property bool shellCenterReveal: !tabletMode' "$indicators_qml" >/dev/null
-rg -F 'alwaysShowIndicators || touchRevealPinned || pointerReveal || shellCenterReveal' "$indicators_qml" >/dev/null
+grep -Fq 'readonly property bool shellCenterReveal: !tabletMode' "$indicators_qml"
+grep -Fq 'alwaysShowIndicators || touchRevealPinned || pointerReveal || shellCenterReveal' "$indicators_qml"
+grep -Fq 'id: feedbackClearTimer' "$repo/KeyboardToggle.qml"
+grep -Fq '"--signal=RTMIN", "--", "z13-osk.service"' "$repo/KeyboardToggle.qml"
+
+if git -C "$repo" grep -I -n -E '/home/gustav|Documents/Codex|local-qwen' -- . ':!CHANGELOG.md' ':!test.sh'; then
+  printf 'test: found machine-specific release content\n' >&2
+  exit 1
+fi
 
 qml_lint=$(command -v qmllint || true)
 if [[ -z "$qml_lint" && -x /usr/lib/qt6/bin/qmllint ]]; then

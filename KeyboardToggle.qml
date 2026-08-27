@@ -8,6 +8,8 @@ BarWidget {
   moduleName: "io.github.gustavonline.rog-flow-z13-touch"
 
   property bool oskServiceActive: false
+  property bool busy: false
+  property string feedback: ""
 
   visible: oskServiceActive
   implicitWidth: button.implicitWidth
@@ -18,11 +20,15 @@ BarWidget {
   }
 
   function toggleKeyboard() {
-    if (!oskServiceActive) return
-    Quickshell.execDetached([
+    if (!oskServiceActive || toggleProcess.running) return
+    busy = true
+    feedbackClearTimer.stop()
+    feedback = ""
+    toggleProcess.command = [
       "systemctl", "--user", "kill", "--kill-whom=main",
-      "--signal=RTMIN", "z13-osk.service"
-    ])
+      "--signal=RTMIN", "--", "z13-osk.service"
+    ]
+    toggleProcess.running = true
   }
 
   Component.onCompleted: refreshServiceState()
@@ -35,11 +41,34 @@ BarWidget {
     }
   }
 
+  Process {
+    id: toggleProcess
+    running: false
+    stderr: StdioCollector { id: toggleError; waitForEnd: true }
+    onExited: function(exitCode) {
+      root.busy = false
+      if (exitCode === 0) {
+        root.feedback = "Keyboard toggled"
+        feedbackClearTimer.restart()
+      } else {
+        var details = String(toggleError.text || "Could not toggle touch keyboard").trim()
+        root.feedback = details.length > 180 ? details.slice(0, 177) + "…" : details
+      }
+    }
+  }
+
   Timer {
     interval: 1500
     repeat: true
     running: true
     onTriggered: root.refreshServiceState()
+  }
+
+  Timer {
+    id: feedbackClearTimer
+    interval: 3500
+    repeat: false
+    onTriggered: root.feedback = ""
   }
 
   IpcHandler {
@@ -69,7 +98,8 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     text: "\uf11c"
-    tooltipText: "Show or hide touch keyboard"
+    tooltipText: root.busy ? "Toggling touch keyboard…" : (root.feedback !== "" ? root.feedback : "Show or hide touch keyboard")
+    enabled: !root.busy
     onPressed: function(button) {
       if (button === Qt.LeftButton) root.toggleKeyboard()
     }

@@ -27,9 +27,22 @@ cannot be installed implicitly by `omarchy plugin add`: Omarchy deliberately
 does not run plugin hooks or elevated commands. `setup.sh` is therefore an
 explicit, inspectable second step. It performs user-level installation only.
 
+## Requirements
+
+This suite supports the 2025 `GZ302EA` hardware contract. The setup gate checks
+the product name and stops before making changes on other hardware unless the
+operator explicitly sets `Z13_ALLOW_UNSUPPORTED=1` after reviewing the device
+paths.
+
+Required commands are `cc`, `make`, `pkg-config`, `wayland-scanner`, `scdoc`,
+`python3`, `systemctl`, `hyprctl`, `monitor-sensor`, `jq`, and `omarchy`.
+Development packages must expose `wayland-client`, `xkbcommon`, and
+`pangocairo` through `pkg-config`. The installer reports the complete missing
+list and never invokes a package manager or `sudo`.
+
 ## Install
 
-The supported future installation path is:
+The supported installation path is:
 
 ```bash
 omarchy plugin add https://github.com/gustavonline/omarchy-rog-flow-z13-touch.git --enable --yes
@@ -48,7 +61,7 @@ concrete dependency list instead of invoking `sudo` or a package manager.
 
 ## Update and remove
 
-Once the repository has a remote, normal source updates use:
+Normal source updates use:
 
 ```bash
 omarchy plugin update io.github.gustavonline.rog-flow-z13-touch --yes
@@ -58,12 +71,25 @@ omarchy plugin update io.github.gustavonline.rog-flow-z13-touch --yes
 Removal is explicit and reversible to Omarchy's built-in bar widgets:
 
 ```bash
-./remove.sh
+~/.config/omarchy/plugins/io.github.gustavonline.rog-flow-z13-touch/remove.sh
 omarchy plugin remove io.github.gustavonline.rog-flow-z13-touch --yes
 ```
 
 `remove.sh` removes only files and services owned by this suite and restores
 the stock tray, indicators and active-window widget IDs in `shell.json`.
+
+## Security and ownership
+
+`setup.sh` is an explicit second step because Omarchy correctly does not run
+plugin install hooks. Review it before execution. It performs user-level work
+only: building the included GPL keyboard, installing the documented user
+executables and systemd units, copying the three companion widgets, and
+updating only their bar IDs in the user's `shell.json`.
+
+The suite does not request root, edit `/usr/share/omarchy`, install packages,
+upload input, or store typed text. Device and service overrides are accepted
+only through documented environment variables used by tests and unsupported
+hardware review.
 
 ## Theme contract
 
@@ -87,6 +113,7 @@ visibility state machine, cover transitions, theme derivation and all four
 plugin manifests. If `qmllint` is installed it also lints the QML. See
 [`z13/TESTING.md`](z13/TESTING.md) for the physical acceptance checklist and
 [`z13/ARCHITECTURE.md`](z13/ARCHITECTURE.md) for ownership boundaries.
+See [`RELEASING.md`](RELEASING.md) for the complete release gate.
 
 ## Licensing and upstream
 

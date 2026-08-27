@@ -1,4 +1,14 @@
-# ROG Flow Z13 Touch v0.2.1 - 2026-08-17
+# Changelog
+
+## 0.3.0 — 2026-08-27
+
+- Align the root and three companion plugin manifests on one suite version
+- Add short-lived keyboard-toggle feedback and persistent runtime errors
+- Harden the systemd toggle command with an explicit argument boundary
+- Add portable GitHub Actions validation and a standalone release checklist
+- Complete public installation, dependency, security, update, and removal guidance
+
+## 0.2.1 — 2026-08-17
 
 - Keep the cover-state file watch alive across keyboard attach/detach events.
 - Route tablet topbar controls through Omarchy's native widget touch handling.
@@ -6,6 +16,8 @@
   synthetic-hover flicker while retaining stock hover behaviour with the cover
   attached.
 - Add regression checks for tablet-only indicator reveal behaviour.
+
+# Upstream wvkbd history
 
 # v0.20 - 2026-07-24
 
