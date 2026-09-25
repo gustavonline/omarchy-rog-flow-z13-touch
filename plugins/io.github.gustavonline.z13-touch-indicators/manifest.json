@@ -6,9 +6,13 @@
   "author": "Gustav Andersen",
   "license": "GPL-3.0-only",
   "description": "Omarchy indicators with a persistent one-tap reveal toggle",
-  "kinds": ["bar-widget"],
+  "kinds": [
+    "bar-widget"
+  ],
   "activation": "on-demand",
-  "entryPoints": {"barWidget": "Indicators.qml"},
+  "entryPoints": {
+    "barWidget": "Indicators.qml"
+  },
   "barWidget": {
     "displayName": "Z13 Touch Indicators",
     "description": "State indicators with a touch reveal toggle",
@@ -24,5 +28,8 @@
         "defaultValue": false
       }
     ]
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.indicators"
   }
 }

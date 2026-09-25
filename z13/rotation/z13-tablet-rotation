@@ -73,7 +73,8 @@ trap shutdown INT TERM
 
 coproc SENSOR_READER { exec stdbuf -oL monitor-sensor --accel 2>&1; }
 sensor_pid="$SENSOR_READER_PID"
-sensor_fd="${SENSOR_READER[0]}"
+# Own the descriptor: Bash closes its coprocess descriptor when the reader exits.
+exec {sensor_fd}<&"${SENSOR_READER[0]}"
 
 while true; do
   if IFS= read -r -t 1 line <&"$sensor_fd"; then

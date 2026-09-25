@@ -20,8 +20,14 @@ for manifest in "$repo"/plugins/*/manifest.json; do
   ' "$manifest" >/dev/null
 done
 
+# The shell grants cloned indicators the idle/nightlight/notification proxies.
+# Without this provenance the buttons render but their actions are no-ops.
+jq -e '.omarchy.clonedFrom == "omarchy.indicators"' \
+  "$repo/plugins/io.github.gustavonline.z13-touch-indicators/manifest.json" >/dev/null
+
 python3 "$repo/z13/tools/verify_layout.py" "$repo/z13/layout.json"
 "$repo/z13/tools/verify_runtime.sh"
+python3 "$repo/z13/tools/test_rotation.py"
 python_cache=$(mktemp -d)
 trap 'rm -rf -- "$python_cache"' EXIT
 PYTHONPYCACHEPREFIX="$python_cache" python3 -m py_compile \

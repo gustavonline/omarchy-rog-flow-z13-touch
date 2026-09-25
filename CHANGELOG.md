@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Identify the touch indicator widget as an Omarchy indicators clone so Stay Awake, Night Light, and Do Not Disturb retain their service connections.
+- Keep an owned sensor pipe descriptor during rotation startup so sensor exits trigger a clean service retry without a bad-file-descriptor error.
+- Cover indicator provenance and sensor disconnects in regression checks.
+
 ## 0.3.0 — 2026-08-27
 
 - Align the root and three companion plugin manifests on one suite version
