@@ -1,0 +1,17 @@
+[Unit]
+Description=Z13 automatic night mode (19:00–07:00)
+After=graphical-session.target pipewire-pulse.service
+PartOf=graphical-session.target
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 %h/.local/share/omarchy-night-mode/control.py daemon
+ExecStopPost=/usr/bin/python3 %h/.local/share/omarchy-night-mode/control.py release
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+
+[Install]
+WantedBy=graphical-session.target

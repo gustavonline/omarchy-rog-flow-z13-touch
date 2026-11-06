@@ -1,0 +1,10 @@
+[Unit]
+Description=Keep Z13 awake during night mode
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/systemd-inhibit --what=idle:sleep --mode=block --who=Z13-night-mode "--why=Factory night work; screen black and audio muted" /usr/bin/sleep infinity
+Restart=on-failure
+RestartSec=5

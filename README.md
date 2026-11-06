@@ -122,3 +122,7 @@ The keyboard is derived from
 The Wayland-derived compatibility files retain their licenses documented in
 `COPYING` and `COPYING_WESTON`. Omarchy-specific additions in this repository
 are distributed under the same GPL-3.0 terms.
+
+## Remote operation and machine configuration
+
+The [operations bundle](z13/operations/README.md) collects the current night-mode and closed-cover controller, appearance schedule, app wrappers, configuration examples and a map of the machine's agent setup. It links to Omarchy Agent Access and distinguishes verified behaviour from the remaining server-mode and encrypted-boot work. Credentials and private network settings are excluded. The existing touch installer keeps its original scope; it does not automatically apply this bundle.

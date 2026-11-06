@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.gustavonline.night-mode",
+  "name": "Z13 Nattilstand",
+  "version": "1.1.4",
+  "author": "Gustav Andersen",
+  "license": "MIT",
+  "description": "Automatisk sort Z13-skærm, caffeinate og lydløs fra 19 til 07.",
+  "kinds": ["bar-widget"],
+  "activation": "on-demand",
+  "entryPoints": { "barWidget": "NightMode.qml" },
+  "barWidget": {
+    "displayName": "Z13 Nattilstand",
+    "category": "System",
+    "aliases": ["night", "nat", "caffeinate"],
+    "allowMultiple": false,
+    "defaultSection": "right",
+    "defaults": {},
+    "schema": []
+  }
+}

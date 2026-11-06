@@ -1,0 +1,12 @@
+[Unit]
+Description=Synchronize Omarchy Catppuccin theme and wallpaper with day/night
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/omarchy-appearance-auto
+
+[Install]
+WantedBy=graphical-session.target
+

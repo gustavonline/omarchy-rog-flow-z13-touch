@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly dark_theme="catppuccin"
+readonly light_theme="catppuccin-latte"
+readonly dark_wallpaper="$HOME/.config/omarchy/backgrounds/catppuccin/machintosh-dark.png"
+readonly light_wallpaper="$HOME/.config/omarchy/backgrounds/catppuccin-latte/machintosh-light.png"
+readonly screensaver="$HOME/.config/omarchy/branding/screensaver.txt"
+readonly lock_file="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/omarchy-appearance-auto.lock"
+
+# Keep manual runs, login startup and the two daily timer events from racing.
+exec 9>"$lock_file"
+flock 9
+
+hour=$((10#$(date +%H)))
+if (( hour >= 7 && hour < 19 )); then
+  mode="light"
+  theme="$light_theme"
+  wallpaper="$light_wallpaper"
+  ascii_options=()
+else
+  mode="dark"
+  theme="$dark_theme"
+  wallpaper="$dark_wallpaper"
+  ascii_options=(--invert)
+fi
+
+current_theme=$(omarchy theme current | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+current_wallpaper=$(readlink -f "$HOME/.local/state/omarchy/current/background" 2>/dev/null || true)
+
+if [[ "$current_theme" != "$theme" ]]; then
+  # The wallpaper is selected explicitly below, so do not briefly show the
+  # stock theme wallpaper during the palette transition.
+  OMARCHY_THEME_SKIP_BACKGROUND=1 omarchy theme set "$theme"
+fi
+
+if [[ "$current_wallpaper" != "$wallpaper" ]]; then
+  omarchy theme bg set "$wallpaper"
+fi
+
+# Omarchy's built-in screensaver renders Unicode art rather than a bitmap.
+# Derive it from the matching wallpaper whenever day/night mode is applied.
+omarchy transcode ascii "$wallpaper" "$screensaver" \
+  --width 96 --height 30 --mode braille --threshold 48 "${ascii_options[@]}"
+
+printf '%s\n' "$mode" >"$HOME/.local/state/omarchy/current/appearance-mode"
+

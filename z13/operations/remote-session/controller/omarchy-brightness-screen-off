@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+exec {lock_fd}>"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/omarchy-brightness-screen-off.lock"
+flock "$lock_fd"
+night="$HOME/.local/bin/omarchy-night-mode"
+case "${1:-}" in
+  down)
+    current="$(omarchy brightness display)"
+    if [[ "$current" =~ ^[0-9]+$ ]] && (( current <= 1 )); then
+      "$night" blank >/dev/null
+    else
+      omarchy brightness display 5%-
+    fi
+    ;;
+  up)
+    # Screen wake must still work if audio restoration reports an error.
+    "$night" wake >/dev/null || true
+    omarchy brightness display on
+    omarchy brightness display +5%
+    ;;
+  *) echo "Usage: $0 {down|up}" >&2; exit 2 ;;
+esac

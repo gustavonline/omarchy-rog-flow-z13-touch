@@ -1,0 +1,13 @@
+[Unit]
+Description=Switch Omarchy appearance at 07:00 and 19:00
+
+[Timer]
+OnCalendar=*-*-* 07:00:00
+OnCalendar=*-*-* 19:00:00
+Persistent=true
+AccuracySec=1s
+Unit=omarchy-appearance-auto.service
+
+[Install]
+WantedBy=timers.target
+

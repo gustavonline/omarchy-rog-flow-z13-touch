@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly config_root="${XDG_CONFIG_HOME:-$HOME/.config}/Codex"
+
+set_danish_spellcheck() {
+  local preferences="$1"
+  local temporary
+
+  [[ -f "$preferences" ]] || return 0
+  temporary=$(mktemp "${preferences}.tmp.XXXXXX")
+  jq '
+    .intl.selected_languages = "da-DK,da,en-US,en-GB,en" |
+    .spellcheck.dictionaries = ["da-DK", "en-US", "en-GB"] |
+    .spellcheck.dictionary = ""
+  ' "$preferences" >"$temporary"
+  chmod --reference="$preferences" "$temporary"
+  mv -f "$temporary" "$preferences"
+}
+
+set_danish_spellcheck "$config_root/Default/Preferences"
+set_danish_spellcheck "$config_root/codex-browser-app/Preferences"
+
+exec /usr/bin/chatgpt "$@"
