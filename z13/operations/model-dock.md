@@ -3,9 +3,9 @@
 Updated 6 November 2026. This extends the machine inventory; runtime source and
 its agent instructions stay in the dedicated plugin repository.
 
-- Plugin: **Omarchy Model Dock 0.11.1**, previously Local AI.
-- Source: [repository](https://github.com/gustavonline/omarchy-llama-cpp-local-ai),
-  [validated commit](https://github.com/gustavonline/omarchy-llama-cpp-local-ai/commit/6173451c57266d5248c3d1e90a36e6d4d58670ad).
+- Plugin: **Omarchy AI Model Dock 0.12.0**, previously Local AI.
+- Source: [repository](https://github.com/gustavonline/omarchy-ai-model-dock),
+  [validated commit](https://github.com/gustavonline/omarchy-ai-model-dock/commit/9955ea210be4d4212e3c87e43f76acb9ed537230).
 - Manifest ID: `io.github.gustavonline.local-ai`; older checkouts can still have
   the directory name `gustav.local-ai`. The native widget remains on the right.
 - Human interface: numbered model hotbar, 1–5 selection while open, loading pulse,
@@ -35,10 +35,10 @@ SSH/cloud directories. It runs without root and does not enable built-in runtime
 agent/MCP proxy tools. Client profiles use private launchers under
 `~/.local/state/omarchy/model-dock/clients/`, without changing normal client defaults.
 
-See the plugin's [setup](https://github.com/gustavonline/omarchy-llama-cpp-local-ai/blob/main/SETUP.md),
-[client guide](https://github.com/gustavonline/omarchy-llama-cpp-local-ai/blob/main/docs/CLIENTS.md)
-and [live test record](https://github.com/gustavonline/omarchy-llama-cpp-local-ai/blob/main/docs/Z13-VALIDATION.md).
-Mac Studio/MLX is [open issue #13](https://github.com/gustavonline/omarchy-llama-cpp-local-ai/issues/13).
+See the plugin's [setup](https://github.com/gustavonline/omarchy-ai-model-dock/blob/main/SETUP.md),
+[client guide](https://github.com/gustavonline/omarchy-ai-model-dock/blob/main/docs/CLIENTS.md)
+and [live test record](https://github.com/gustavonline/omarchy-ai-model-dock/blob/main/docs/Z13-VALIDATION.md).
+Mac Studio/MLX is [open issue #13](https://github.com/gustavonline/omarchy-ai-model-dock/issues/13).
 The production panel awaits normal owner unlock for the queued shell refresh;
 the session was not unlocked or rebooted to test it.
 
@@ -51,8 +51,23 @@ profile. Full new 60K input took 648 seconds to first answer; the repeated promp
 took 0.407 seconds and reused 60,059 tokens. These are separate measurements;
 a 64K limit does not make a new long prompt cheap. Larger prompt batches were
 slower in the matched short probe, so 512 was retained. See the detailed
-[27B/64K record](https://github.com/gustavonline/omarchy-llama-cpp-local-ai/blob/main/docs/QWEN38-Z13.md).
+[27B/64K record](https://github.com/gustavonline/omarchy-ai-model-dock/blob/main/docs/QWEN38-Z13.md).
 
 The Mac was tested with its existing Pi client over SSH. A private per-owner
 Terminal shortcut was prepared; no Mac app, public control endpoint or new
 remote-desktop setup was added. Existing normal client defaults were preserved.
+
+Version 0.12 retires the old always-on assistant, observer, suggestions, voice UI
+and embedded harness delegation. Its inactive user service and two owned voice
+bindings were removed with a backup under
+`~/.local/state/omarchy/model-dock/legacy-backups/20261106-125315/`. A repeated
+migration made no changes. Hyprland reload and config validation passed. Model
+weights, API keys, runtime profiles and private assistant settings/history were
+preserved, and the model server stayed running. Twelve backend tests, native
+plugin validation and Quickshell load/render passed; API authentication was
+rechecked. See the plugin
+[migration guide](https://github.com/gustavonline/omarchy-ai-model-dock/blob/main/docs/MIGRATING.md).
+
+The corresponding Resources page is prepared in
+[draft PR #50](https://github.com/onlinesourdough/Resources/pull/50); it has not
+been published to the Resources site.
