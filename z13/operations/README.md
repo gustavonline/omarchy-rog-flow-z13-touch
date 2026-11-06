@@ -75,3 +75,10 @@ The bundled policy tests exercise synthetic network, power, cover, native-lock a
     python3 -B remote-session/controller/test_policy.py
 
 Physical cable/network changes and reboot were not tested here. The final desktop quick-click behaviour is covered by command-level tests and a fresh component compilation; a full pointer test of the latest panel awaits an unlocked desktop. This repository does not claim complete history of every past experiment: it collects the relevant current components found in the touch suite, selected user scripts/units, dedicated night-mode source and plugin repositories. Personal context, model weights, recordings, credentials and raw application state are not mirrored.
+
+## Local inference server
+
+[Model Dock deployment](model-dock.md) records the separately maintained plugin,
+CLI/skill, private configuration locations, measured inference settings and current
+server state. Runtime source remains in its own repository; secrets and weights
+are excluded from this operations bundle.
